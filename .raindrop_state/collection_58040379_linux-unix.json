@@ -1,0 +1,19 @@
+{
+  "collection_id": 58040379,
+  "collection_name": "linux-unix",
+  "current_page": 0,
+  "processed_bookmark_ids": [],
+  "stats": {
+    "processed": 0,
+    "kept": 0,
+    "deleted": 0,
+    "archived": 0,
+    "moved": 0,
+    "errors": 0,
+    "skipped": 0,
+    "start_time": "2025-07-25 19:08:55.377511",
+    "session_time": 34.873659
+  },
+  "last_updated": "2025-07-25T19:09:30.251132",
+  "dry_run": false
+}
