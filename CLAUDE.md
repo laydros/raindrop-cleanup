@@ -79,7 +79,7 @@ The application uses a **component orchestration pattern** where `RaindropBookma
 ### Data Flow
 
 1. **Collection Selection**: User selects a Raindrop collection to process
-2. **Batch Processing**: Bookmarks are fetched in batches (default 8 items)
+2. **Batch Processing**: Bookmarks are fetched in batches (default 10 items)
 3. **AI Analysis**: Claude analyzes each batch and suggests actions (DELETE, KEEP, ARCHIVE, MOVE)
 4. **User Review**: Interactive interface shows recommendations with reasoning
 5. **Action execution**: Selected actions are executed via Raindrop API

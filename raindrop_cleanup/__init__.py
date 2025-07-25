@@ -1,7 +1,7 @@
 """
 🌧️ Raindrop Cleanup Tool
 
-An interactive, AI-powered bookmark cleanup tool for Raindrop.io designed with 
+An interactive, AI-powered bookmark cleanup tool for Raindrop.io designed with
 ADHD-friendly features to help you declutter and organize your bookmarks efficiently.
 """
 
