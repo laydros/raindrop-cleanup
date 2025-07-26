@@ -94,14 +94,17 @@ export ANTHROPIC_API_KEY="your_claude_api_key_here"
 ## 📸 Screenshots
 
 ### Collection Selection
+
 ![Collection Selection](docs/screenshots/raindrop-cleanup_collections.png)
 *Choose from your Raindrop collections with progress indicators showing previously processed items*
 
 ### Interactive Batch Review
+
 ![Interactive Review](docs/screenshots/raindrop-cleanup_curses-selection.png)
 *Keyboard navigation interface showing AI recommendations with reasoning for each bookmark*
 
 ### AI Analysis in Progress
+
 ![AI Processing](docs/screenshots/raindrop-cleanup_recommendations-loading.png)
 *Real-time feedback while Claude analyzes your bookmarks and generates recommendations*
 
@@ -287,7 +290,3 @@ Not currently through the CLI, but the code is open source. Check the `ai/claude
 
 - [Raindrop.io](https://raindrop.io) for the excellent bookmark management service
 - [Anthropic](https://www.anthropic.com) for Claude AI
-
----
-
-**Happy bookmark decluttering! 🌟**
