@@ -312,9 +312,7 @@ class UserInterface:
                     return []
                 elif user_input == "all":
                     return [
-                        i
-                        for i, d in enumerate(decisions)
-                        if d.get("action") != "KEEP"
+                        i for i, d in enumerate(decisions) if d.get("action") != "KEEP"
                     ]
                 elif user_input == "deletes":
                     return [
