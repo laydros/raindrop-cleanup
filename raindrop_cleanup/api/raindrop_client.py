@@ -1,7 +1,7 @@
 """Raindrop.io API client for bookmark management."""
 
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Union, cast
 
 import requests
 from requests.exceptions import RequestException
@@ -41,7 +41,8 @@ class RaindropClient:
         try:
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
-            return response.json().get("items", [])
+            data = cast(dict[str, Any], response.json())
+            return cast(list[dict[str, Any]], data.get("items", []))
         except (RequestException, ValueError) as e:
             print(f"Error fetching collections: {e}")
             return []
@@ -59,7 +60,7 @@ class RaindropClient:
             Dictionary containing bookmarks and pagination info
         """
         url = f"https://api.raindrop.io/rest/v1/raindrops/{collection_id}"
-        params = {
+        params: dict[str, Union[str, int]] = {
             "page": page,
             "perpage": 50,  # Max allowed by API
             "sort": "-created",  # Newest first
@@ -67,7 +68,7 @@ class RaindropClient:
         try:
             response = requests.get(url, headers=self.headers, params=params)
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except (RequestException, ValueError) as e:
             print(f"Error fetching bookmarks: {e}")
             return {}
