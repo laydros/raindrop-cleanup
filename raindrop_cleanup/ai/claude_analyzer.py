@@ -1,10 +1,11 @@
 """Claude AI bookmark analysis for intelligent recommendations."""
 
-import time
-import anthropic
-from typing import List, Dict, Optional
-from datetime import datetime
 import os
+import time
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import anthropic
 
 
 class ClaudeAnalyzer:
@@ -19,7 +20,7 @@ class ClaudeAnalyzer:
         self.client = client or anthropic.Anthropic()
         self.last_call_time = 0
         self.rate_limit_delay = 1  # seconds between Claude calls
-        
+
         # Setup debug logging
         self.debug_enabled = True  # Can make this configurable later
         self.debug_dir = ".raindrop_debug"
@@ -30,10 +31,10 @@ class ClaudeAnalyzer:
         """Log debug message to file."""
         if not self.debug_enabled:
             return
-            
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_file = os.path.join(self.debug_dir, "claude_parser.log")
-        
+
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
 
@@ -219,64 +220,80 @@ Include specific reasoning focusing on age, relevance, and collection fit.
         """Parse Claude's batch response into decision dictionaries."""
         decisions = []
         lines = message.strip().split("\n")
-        
-        # Parse Claude's multi-line response format
-        self._debug_log("="*60)
+
+        self._debug_log("=" * 60)
         self._debug_log(f"PARSING BATCH RESPONSE ({bookmark_count} bookmarks)")
-        self._debug_log("="*60)
+        self._debug_log("=" * 60)
         self._debug_log(f"Raw response: {repr(message)}")
-        self._debug_log("="*60)
+        self._debug_log("=" * 60)
 
         i = 0
         while i < len(lines):
             line = lines[i].strip()
             self._debug_log(f"Line {i}: '{line}'")
-            
-            if ". " in line and line[0].isdigit():
+
+            if ". " in line and line and line[0].isdigit():
                 parts = line.split(". ", 1)[1].strip()
                 self._debug_log(f"  Found decision: '{parts}'")
 
-                # Parse reasoning - handle multiple formats
+                action_part = parts
                 reasoning = "no reason given"
-                
-                # Format 1: "1. DELETE - reasoning text"
+
+                # Format 1: "ACTION - reasoning text"
                 if " - " in parts:
                     parts_split = parts.split(" - ", 1)
                     action_part = parts_split[0].strip()
                     reasoning = parts_split[1].strip()
-                    self._debug_log(f"  Format 1: action='{action_part}', reasoning='{reasoning}'")
-                    parts = action_part  # Use just the action part
+                    self._debug_log(
+                        f"  Format 1: action='{action_part}', reasoning='{reasoning}'"
+                    )
                 else:
-                    # Format 2: Look for reasoning on next lines
+                    # NEW LOGIC: Handle reasoning on subsequent lines (prefixed, bulleted, or plain)
+                    reasoning_lines = []
                     j = i + 1
-                    self._debug_log(f"  Looking for reasoning starting at line {j}")
-                    while j < len(lines) and lines[j].strip():
+                    while j < len(lines):
                         next_line = lines[j].strip()
-                        self._debug_log(f"    Line {j}: '{next_line}'")
-                        
-                        # Try different reasoning prefixes
-                        for prefix in ["Reasoning:", "Reason:"]:
-                            if next_line.startswith(prefix):
-                                reasoning = next_line.replace(prefix, "").strip()
-                                self._debug_log(f"    FOUND reasoning with '{prefix}': '{reasoning}'")
-                                break
-                        
-                        if reasoning != "no reason given":
+
+                        # Stop if we hit the next numbered item or a summary section
+                        if (
+                            next_line
+                            and (next_line[0].isdigit() and ". " in next_line)
+                            or next_line.lower().startswith("summary:")
+                            or next_line.lower().startswith("reasoning summary:")
+                        ):
+                            self._debug_log(
+                                f"    Hit next decision or summary, stopping scan at line {j}"
+                            )
                             break
-                            
-                        if (len(next_line) > 0 and next_line[0].isdigit() and ". " in next_line):
-                            # Hit next decision, stop looking
-                            self._debug_log(f"    Hit next decision, stopping")
-                            break
+
+                        # Clean the line by removing common prefixes and add to reasoning
+                        clean_line = next_line
+                        for prefix in ["Reasoning:", "Reason:", "-"]:
+                            if clean_line.lower().startswith(prefix.lower()):
+                                clean_line = clean_line[len(prefix) :].strip()
+                                break  # Only remove one prefix per line
+
+                        if clean_line:
+                            reasoning_lines.append(clean_line)
+
                         j += 1
-                
+
+                    if reasoning_lines:
+                        reasoning = " ".join(reasoning_lines)
+                        self._debug_log(
+                            f"  Combined reasoning from lines {i+1}-{j-1}: '{reasoning}'"
+                        )
+
+                    # Advance the main loop counter past the lines we just processed
+                    i = j - 1
+
                 self._debug_log(f"  Final reasoning: '{reasoning}'")
+                action_part = action_part.strip()
 
                 # Parse different decision types
-                if parts.upper().startswith("MOVE:"):
-                    # Extract collection name
+                if action_part.upper().startswith("MOVE:"):
                     try:
-                        collection_name = parts.split(":", 1)[1].strip()
+                        collection_name = action_part.split(":", 1)[1].strip()
                         self._debug_log(f"  MOVE to '{collection_name}' - {reasoning}")
                         decisions.append(
                             {
@@ -285,22 +302,27 @@ Include specific reasoning focusing on age, relevance, and collection fit.
                                 "reasoning": reasoning,
                             }
                         )
-                    except Exception as e:
-                        self._debug_log(f"  MOVE parse error: {e}")
+                    except IndexError:
+                        self._debug_log(f"  MOVE parse error: {action_part}")
                         decisions.append({"action": "KEEP", "reasoning": "parse error"})
                 else:
                     # Handle DELETE, KEEP, ARCHIVE
-                    action = parts.strip().upper()
+                    action = action_part.upper()
                     self._debug_log(f"  {action} - {reasoning}")
 
                     if action in ["DELETE", "KEEP", "ARCHIVE"]:
                         decisions.append({"action": action, "reasoning": reasoning})
                     else:
-                        self._debug_log(f"  Unknown action '{action}', defaulting to KEEP")
-                        decisions.append(
-                            {"action": "KEEP", "reasoning": f"unclear recommendation: {action}"}
+                        self._debug_log(
+                            f"  Unknown action '{action}', defaulting to KEEP"
                         )
-            
+                        decisions.append(
+                            {
+                                "action": "KEEP",
+                                "reasoning": f"unclear recommendation: {action}",
+                            }
+                        )
+
             i += 1
 
         # Ensure we have decisions for all bookmarks
@@ -309,9 +331,13 @@ Include specific reasoning focusing on age, relevance, and collection fit.
                 {"action": "KEEP", "reasoning": "no recommendation received"}
             )
 
-        self._debug_log(f"FINAL DECISIONS: {len(decisions)} decisions for {bookmark_count} bookmarks")
+        self._debug_log(
+            f"FINAL DECISIONS: {len(decisions)} decisions for {bookmark_count} bookmarks"
+        )
         for i, decision in enumerate(decisions[:bookmark_count]):
-            self._debug_log(f"  {i+1}. {decision['action']} - {decision['reasoning']}")
-        self._debug_log("="*60)
+            self._debug_log(
+                f"  {i+1}. {decision['action']} -> {decision.get('target', '')} - {decision['reasoning']}"
+            )
+        self._debug_log("=" * 60)
 
         return decisions[:bookmark_count]
