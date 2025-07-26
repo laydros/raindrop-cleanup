@@ -341,9 +341,10 @@ class TestArgumentParsing:
     @patch("builtins.print")
     def test_missing_env_vars_precheck(self, mock_print):
         """CLI should exit early when required env vars are missing."""
-        with patch.dict(os.environ, {}, clear=True), patch(
-            "raindrop_cleanup.cli.main.RaindropBookmarkCleaner"
-        ) as mock_cleaner:
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("raindrop_cleanup.cli.main.RaindropBookmarkCleaner") as mock_cleaner,
+        ):
             main()
 
             mock_cleaner.assert_not_called()
