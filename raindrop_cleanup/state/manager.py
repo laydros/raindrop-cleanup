@@ -229,11 +229,18 @@ class StateManager:
             print("❌ Cancelled")
             return 0
 
-    def print_stats(self, dry_run: bool = False) -> None:
+    def print_stats(
+        self,
+        dry_run: bool = False,
+        initial_count: Optional[int] = None,
+        final_count: Optional[int] = None,
+    ) -> None:
         """Print final statistics.
 
         Args:
             dry_run: Whether this was a dry run
+            initial_count: Initial bookmark count in collection
+            final_count: Final bookmark count in collection
         """
         start_time = self.stats.get("start_time")
         if not isinstance(start_time, datetime):
@@ -252,6 +259,13 @@ class StateManager:
             print(
                 f"⏱️  Total time: {total_session_time/60:.1f} minutes (across sessions)"
             )
+        # Show collection statistics if available
+        if initial_count is not None and final_count is not None:
+            print(f"📊 Collection at start: {initial_count} bookmarks")
+            print(f"📊 Collection now: {final_count} bookmarks")
+            print(f"📊 Net change: {initial_count - final_count} bookmarks")
+            print()
+
         print(f"📊 Total processed: {len(self.processed_bookmark_ids)}")
         print(f"📋 Actions taken: {self.stats['processed']}")
         print(f"✅ Kept: {self.stats['kept']}")

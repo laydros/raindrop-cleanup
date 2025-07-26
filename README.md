@@ -12,7 +12,7 @@ An interactive, AI-powered bookmark cleanup tool for [Raindrop.io](https://raind
 
 ### 🧠 Streamlined Workflow
 
-- **Small batches**: Processes bookmarks in manageable chunks (default: 6 items)
+- **Small batches**: Processes bookmarks in manageable chunks (default: 8 items)
 - **Break reminders**: Suggests breaks every 25 items to maintain focus
 - **Progress tracking**: Shows real-time statistics and processing rate
 - **State persistence**: Resume sessions anytime without losing progress
@@ -146,14 +146,14 @@ raindrop-cleanup --clean-state
 raindrop-cleanup --archive-name "My Archive"
 
 # Combine options for your preferred workflow
-raindrop-cleanup --batch-size 6 --text-mode --dry-run
+raindrop-cleanup --batch-size 8 --text-mode --dry-run
 ```
 
 ## 🎛️ Command Line Options
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--batch-size` | `-b` | Items per batch (default: 6, recommended: 4-8) |
+| `--batch-size` | `-b` | Items per batch (default: 8, recommended: 4-8) |
 | `--list-collections` | `-l` | Show all collections and exit |
 | `--archive-name` | | Archive collection name (default: "Archive") |
 | `--dry-run` | `-n` | Preview changes without executing |

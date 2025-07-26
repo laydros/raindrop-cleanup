@@ -36,11 +36,15 @@ class RaindropBookmarkCleaner:
         # Configuration
         self.dry_run = dry_run
 
+        # Track bookmark counts for statistics
+        self.initial_count: Optional[int] = None
+        self.final_count: Optional[int] = None
+
     def process_collection(
         self,
         collection_id: int,
         collection_name: str,
-        batch_size: int = 6,
+        batch_size: int = 8,
         archive_collection_id: Optional[int] = None,
         all_collections: Optional[list[dict[str, Any]]] = None,
         resume_from_state: bool = True,
@@ -57,6 +61,13 @@ class RaindropBookmarkCleaner:
         """
         print(f"\n🚀 Processing collection: {collection_name}")
         print(f"Collection ID: {collection_id}")
+
+        # Get initial bookmark count
+        initial_data = self.raindrop_client.get_bookmarks_from_collection(
+            collection_id, 0
+        )
+        self.initial_count = initial_data.get("count", 0)
+        print(f"📊 Total bookmarks in collection: {self.initial_count}")
 
         # Try to load previous state
         start_page = 0
@@ -168,12 +179,24 @@ class RaindropBookmarkCleaner:
                                 print(f"    ❌ DELETE: {title}")
                             elif action == "ARCHIVE":
                                 print(f"    📦 ARCHIVE: {title}")
-                        print("\nPress Enter to confirm, or Ctrl+C to cancel...")
-                        try:
-                            input()
-                        except KeyboardInterrupt:
-                            print("❌ Actions cancelled by user")
-                            return
+
+                        while True:
+                            try:
+                                response = (
+                                    input("\nExecute these actions? (y/n): ")
+                                    .strip()
+                                    .lower()
+                                )
+                                if response in ["y", "yes"]:
+                                    break
+                                elif response in ["n", "no"]:
+                                    print("❌ Actions cancelled by user")
+                                    return
+                                else:
+                                    print("Please enter 'y' for yes or 'n' for no")
+                            except KeyboardInterrupt:
+                                print("\n❌ Actions cancelled by user")
+                                return
 
                     # Execute user's choices
                     self._execute_user_selections(
@@ -219,7 +242,16 @@ class RaindropBookmarkCleaner:
         # Collection completed - clean up state file
         self.state_manager.cleanup_state_file()
 
+        # Get final bookmark count
+        final_data = self.raindrop_client.get_bookmarks_from_collection(
+            collection_id, 0
+        )
+        self.final_count = final_data.get("count", 0)
+
         print(f"\n✅ Completed collection: {collection_name}")
+        print(f"   📊 Bookmarks at start: {self.initial_count}")
+        print(f"   📊 Bookmarks remaining: {self.final_count}")
+        print(f"   📊 Net change: {self.initial_count - self.final_count}")
         print(f"   Total bookmarks processed this session: {total_processed}")
         print(
             f"   Total bookmarks processed overall: {len(self.state_manager.processed_bookmark_ids)}"
@@ -318,4 +350,8 @@ class RaindropBookmarkCleaner:
 
     def print_stats(self) -> None:
         """Print final statistics."""
-        self.state_manager.print_stats(dry_run=self.dry_run)
+        self.state_manager.print_stats(
+            dry_run=self.dry_run,
+            initial_count=self.initial_count,
+            final_count=self.final_count,
+        )

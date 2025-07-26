@@ -233,8 +233,10 @@ class TestRaindropBookmarkCleaner:
 
         mock_raindrop_instance = Mock()
         mock_raindrop_instance.get_bookmarks_from_collection.side_effect = [
-            {"items": mock_bookmarks},
+            {"items": mock_bookmarks, "count": 10},  # Initial count call
+            {"items": mock_bookmarks},  # Processing call
             {"items": []},  # Empty response to end loop
+            {"items": [], "count": 7},  # Final count call
         ]
         mock_raindrop.return_value = mock_raindrop_instance
 
@@ -267,9 +269,10 @@ class TestRaindropBookmarkCleaner:
         mock_state_manager.return_value = mock_state_instance
 
         mock_raindrop_instance = Mock()
-        mock_raindrop_instance.get_bookmarks_from_collection.side_effect = (
-            KeyboardInterrupt()
-        )
+        mock_raindrop_instance.get_bookmarks_from_collection.side_effect = [
+            {"items": [], "count": 5},  # Initial count call
+            KeyboardInterrupt(),  # Then interrupt on processing call
+        ]
         mock_raindrop.return_value = mock_raindrop_instance
 
         cleaner = RaindropBookmarkCleaner()
@@ -319,4 +322,6 @@ class TestRaindropBookmarkCleaner:
         cleaner = RaindropBookmarkCleaner(dry_run=True)
         cleaner.print_stats()
 
-        mock_state_instance.print_stats.assert_called_once_with(dry_run=True)
+        mock_state_instance.print_stats.assert_called_once_with(
+            dry_run=True, initial_count=None, final_count=None
+        )

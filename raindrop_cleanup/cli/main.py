@@ -28,7 +28,7 @@ Environment Variables:
 ADHD-Friendly Features:
   • Shows Claude's recommendations with reasoning
   • You choose which actions to execute
-  • Processes in small batches (default: 6 items)
+  • Processes in small batches (default: 8 items)
   • Suggests breaks every 25 items
   • Shows real-time progress and statistics
   • Conservative defaults (keeps items when uncertain)
@@ -39,8 +39,8 @@ ADHD-Friendly Features:
         "--batch-size",
         "-b",
         type=int,
-        default=6,
-        help="Number of bookmarks to process in each batch (default: 6, recommended 4-8)",
+        default=8,
+        help="Number of bookmarks to process in each batch (default: 8, recommended 6-10)",
     )
 
     parser.add_argument(

@@ -5,12 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Environment Setup
+
 ```bash
 # Install package in development mode with all dependencies
 pip install -e ".[dev]"
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 pytest
@@ -33,6 +35,7 @@ pytest tests/integration/
 ```
 
 ### Code Quality
+
 ```bash
 # Format code with Black
 black raindrop_cleanup/ tests/
@@ -48,6 +51,7 @@ black raindrop_cleanup/ tests/ && ruff check raindrop_cleanup/ tests/ && mypy ra
 ```
 
 ### CLI Usage
+
 ```bash
 # Run the CLI (requires API keys)
 raindrop-cleanup
@@ -86,7 +90,7 @@ The application uses a **component orchestration pattern** where `RaindropBookma
 ### Data Flow
 
 1. **Collection Selection**: User selects a Raindrop collection to process
-2. **Batch Processing**: Bookmarks are fetched in batches (default 6 items)
+2. **Batch Processing**: Bookmarks are fetched in batches (default 8 items)
 3. **AI Analysis**: Claude analyzes each batch and suggests actions (DELETE, KEEP, ARCHIVE, MOVE)
 4. **User Review**: Interactive interface shows recommendations with reasoning
 5. **Action execution**: Selected actions are executed via Raindrop API
@@ -103,6 +107,7 @@ The application uses a **component orchestration pattern** where `RaindropBookma
 ### State Management Architecture
 
 The `StateManager` maintains:
+
 - **Processed bookmark IDs**: Set of already-handled bookmarks to enable resumption
 - **Statistics**: Counters for processed, kept, deleted, archived, moved, errors, skipped
 - **Session metadata**: Collection info, current page, timing data
@@ -118,6 +123,7 @@ The `StateManager` maintains:
 ## Environment Variables
 
 Required for functionality:
+
 - `RAINDROP_TOKEN`: Raindrop.io API token
 - `ANTHROPIC_API_KEY`: Claude AI API key
 
@@ -131,6 +137,7 @@ The test suite uses **pytest** with comprehensive mocking:
 - **Mocking strategy**: Mock external APIs (Raindrop, Anthropic) and system calls (curses, file I/O)
 
 Key testing patterns:
+
 - Mock the `anthropic.Anthropic` client and `requests` for API calls
 - Use `tempfile.TemporaryDirectory` for state file testing
 - Patch `curses` module for UI testing without terminal interaction
