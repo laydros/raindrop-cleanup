@@ -249,7 +249,8 @@ class StateManager:
             print(
                 f"⏱️  Total time: {total_session_time/60:.1f} minutes (across sessions)"
             )
-        print(f"📊 Total processed: {self.stats['processed']}")
+        print(f"📊 Total processed: {len(self.processed_bookmark_ids)}")
+        print(f"📋 Actions taken: {self.stats['processed']}")
         print(f"✅ Kept: {self.stats['kept']}")
         print(f"❌ Deleted: {self.stats['deleted']}")
         print(f"📦 Archived: {self.stats['archived']}")
@@ -257,10 +258,11 @@ class StateManager:
         print(f"⏭️  Skipped: {self.stats['skipped']}")
         print(f"⚠️  Errors: {self.stats['errors']}")
 
-        total_items = self.stats["processed"] + self.stats["skipped"]
-        if total_items > 0:
-            kept_pct = (self.stats["kept"] / total_items) * 100
-            deleted_pct = (self.stats["deleted"] / total_items) * 100
+        # Calculate percentages based on total actions taken (excluding skipped items)
+        total_actions = self.stats["kept"] + self.stats["deleted"] + self.stats["archived"] + self.stats["moved"]
+        if total_actions > 0:
+            kept_pct = (self.stats["kept"] / total_actions) * 100
+            deleted_pct = (self.stats["deleted"] / total_actions) * 100
             print(f"📈 Kept: {kept_pct:.1f}% | Deleted: {deleted_pct:.1f}%")
 
     def add_processed_bookmark(self, bookmark_id: int) -> None:

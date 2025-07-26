@@ -232,13 +232,17 @@ class TestStateManager:
                 "skipped": 2,
             }
         )
+        # Add some processed bookmark IDs to match the processed count
+        for i in range(12):  # 10 with actions + 2 skipped = 12 total
+            state_manager.add_processed_bookmark(i)
 
         state_manager.print_stats(dry_run=False)
 
         # Verify some key outputs were printed
         print_calls = [call[0][0] for call in mock_print.call_args_list]
         assert any("BOOKMARK CLEANUP COMPLETE!" in call for call in print_calls)
-        assert any("Total processed: 10" in call for call in print_calls)
+        assert any("Total processed: 12" in call for call in print_calls)
+        assert any("Actions taken: 10" in call for call in print_calls)
         assert any("Deleted: 3" in call for call in print_calls)
 
     @patch("builtins.print")
