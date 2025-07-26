@@ -81,6 +81,7 @@ class TestStateManager:
         assert loaded_state["collection_name"] == "Unsorted"
         assert state_manager.processed_bookmark_ids == {101, 102, 103}
         assert state_manager.stats["processed"] == 3
+        assert state_manager.current_state_file == state_file
 
     def test_load_state_file_not_found(self, temp_state_dir):
         """Test loading state when file doesn't exist."""

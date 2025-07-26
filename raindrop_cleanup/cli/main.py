@@ -106,6 +106,14 @@ ADHD-Friendly Features:
             "🐛 Debug mode enabled - Claude AI analysis will be logged to .raindrop_debug/"
         )
 
+    # Validate required environment variables early for better UX
+    if not os.getenv("RAINDROP_TOKEN"):
+        print("❌ RAINDROP_TOKEN environment variable not set")
+        return
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("❌ ANTHROPIC_API_KEY environment variable not set")
+        return
+
     try:
         cleaner = RaindropBookmarkCleaner(
             dry_run=args.dry_run, text_mode=args.text_mode, debug=debug_mode
