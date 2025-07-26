@@ -259,7 +259,12 @@ class StateManager:
         print(f"⚠️  Errors: {self.stats['errors']}")
 
         # Calculate percentages based on total actions taken (excluding skipped items)
-        total_actions = self.stats["kept"] + self.stats["deleted"] + self.stats["archived"] + self.stats["moved"]
+        total_actions = (
+            self.stats["kept"]
+            + self.stats["deleted"]
+            + self.stats["archived"]
+            + self.stats["moved"]
+        )
         if total_actions > 0:
             kept_pct = (self.stats["kept"] / total_actions) * 100
             deleted_pct = (self.stats["deleted"] / total_actions) * 100
