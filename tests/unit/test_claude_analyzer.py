@@ -7,6 +7,7 @@ import pytest
 from anthropic.types import TextBlock
 
 from raindrop_cleanup.ai.claude_analyzer import ClaudeAnalyzer
+from raindrop_cleanup.ai.prompt_config import load_prompt_template
 
 
 class TestClaudeAnalyzer:
@@ -96,11 +97,16 @@ class TestClaudeAnalyzer:
             batch_info, collection_info, 1, "Development"
         )
 
-        assert "helping someone with ADHD" in prompt
-        assert "CURRENT COLLECTION: Development" in prompt
-        assert batch_info in prompt
-        assert collection_info in prompt
-        assert "NEVER suggest MOVE to current collection (Development)" in prompt
+        template = load_prompt_template()
+        expected = template.format(
+            bookmark_count=1,
+            current_collection_name="Development",
+            batch_info=batch_info,
+            collection_info=collection_info,
+            current_collection_info="\nCURRENT COLLECTION: Development\n",
+        )
+
+        assert prompt == expected
 
     def test_parse_batch_response_valid_responses(self, mock_anthropic_client):
         """Test parsing valid Claude responses."""

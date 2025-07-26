@@ -284,7 +284,9 @@ The tool is designed for this. It saves state automatically, so you can process 
 
 ### Can I customize the AI prompts?
 
-Not currently through the CLI, but the code is open source. Check the `ai/claude_analyzer.py` module to understand and modify the prompts.
+Yes. Set the `RAINDROP_PROMPT_FILE` environment variable to the path of a text
+file containing your custom prompt template. If the variable is not provided,
+the bundled template at `raindrop_cleanup/ai/default_prompt.txt` is used.
 
 ## 🙏 Acknowledgments
 
