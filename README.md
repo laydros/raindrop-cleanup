@@ -37,7 +37,7 @@ An interactive, AI-powered bookmark cleanup tool for [Raindrop.io](https://raind
 ## 🚀 Installation
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.9 or higher
 - [Raindrop.io](https://raindrop.io) account
 - [Anthropic Claude](https://console.anthropic.com/) API access
 

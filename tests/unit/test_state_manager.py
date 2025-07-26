@@ -4,9 +4,10 @@ import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 import pytest
+
 from raindrop_cleanup.state.manager import StateManager
 
 
@@ -53,7 +54,7 @@ class TestStateManager:
         assert expected_file.exists()
 
         # Verify file contents
-        with open(expected_file, "r") as f:
+        with open(expected_file) as f:
             saved_state = json.load(f)
 
         assert saved_state["collection_id"] == 123
@@ -156,7 +157,7 @@ class TestStateManager:
             },
         ]
 
-        for i, data in enumerate(sessions_data):
+        for _i, data in enumerate(sessions_data):
             filename = f"collection_{data['collection_id']}_{data['collection_name'].replace(' ', '_')}.json"
             state_file = Path(temp_state_dir) / filename
             with open(state_file, "w") as f:

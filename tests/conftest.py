@@ -2,10 +2,9 @@
 
 import json
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, MagicMock
 from datetime import datetime
-from typing import Dict, List
+from pathlib import Path
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -88,7 +87,7 @@ def mock_anthropic_client():
     mock_message.content[
         0
     ].text = """1. MOVE:Development - programming tutorial
-2. MOVE:Gaming - game speedrun guide  
+2. MOVE:Gaming - game speedrun guide
 3. DELETE - outdated tutorial"""
 
     mock_client.messages.create.return_value = mock_message
@@ -167,7 +166,7 @@ def mock_curses():
 # Test data helpers
 def create_mock_bookmark(
     bookmark_id: int, title: str, domain: str = "example.com"
-) -> Dict:
+) -> dict:
     """Create a mock bookmark for testing."""
     return {
         "_id": bookmark_id,
@@ -179,6 +178,6 @@ def create_mock_bookmark(
     }
 
 
-def create_mock_collection(collection_id: int, title: str, count: int = 10) -> Dict:
+def create_mock_collection(collection_id: int, title: str, count: int = 10) -> dict:
     """Create a mock collection for testing."""
     return {"_id": collection_id, "title": title, "count": count}

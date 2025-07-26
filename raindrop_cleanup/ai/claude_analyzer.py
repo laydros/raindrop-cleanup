@@ -3,7 +3,7 @@
 import os
 import time
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 import anthropic
 
@@ -11,18 +11,21 @@ import anthropic
 class ClaudeAnalyzer:
     """Analyzes bookmarks using Claude AI to provide intelligent recommendations."""
 
-    def __init__(self, client: Optional[anthropic.Anthropic] = None):
+    def __init__(
+        self, client: Optional[anthropic.Anthropic] = None, debug: bool = False
+    ):
         """Initialize the Claude analyzer.
 
         Args:
             client: Pre-configured Anthropic client. If not provided, creates new one.
+            debug: Enable debug logging to files
         """
         self.client = client or anthropic.Anthropic()
         self.last_call_time = 0
         self.rate_limit_delay = 1  # seconds between Claude calls
 
         # Setup debug logging
-        self.debug_enabled = True  # Can make this configurable later
+        self.debug_enabled = debug
         self.debug_dir = ".raindrop_debug"
         if self.debug_enabled:
             os.makedirs(self.debug_dir, exist_ok=True)
@@ -47,10 +50,10 @@ class ClaudeAnalyzer:
 
     def analyze_batch(
         self,
-        bookmarks: List[Dict],
-        all_collections: Optional[List[Dict]] = None,
+        bookmarks: list[dict],
+        all_collections: Optional[list[dict]] = None,
         current_collection_name: Optional[str] = None,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Analyze a batch of bookmarks with Claude for efficiency.
 
         Args:
@@ -90,7 +93,7 @@ class ClaudeAnalyzer:
             print(f"Batch Claude API error: {e}")
             return [{"action": "KEEP", "reasoning": "API error"}] * len(bookmarks)
 
-    def _build_batch_info(self, bookmarks: List[Dict]) -> str:
+    def _build_batch_info(self, bookmarks: list[dict]) -> str:
         """Build bookmark information string for the prompt."""
         batch_info = ""
         for i, bookmark in enumerate(bookmarks):
@@ -113,7 +116,7 @@ class ClaudeAnalyzer:
 
     def _build_collection_info(
         self,
-        all_collections: Optional[List[Dict]],
+        all_collections: Optional[list[dict]],
         current_collection_name: Optional[str],
     ) -> str:
         """Build collection information string for the prompt."""
@@ -159,7 +162,7 @@ Analyze these {bookmark_count} bookmarks and provide recommendations:
 ACTIONS:
 - DELETE: Topical blog posts >2 years old, tutorials >5 years old, "someday reading" items, duplicate content
 - KEEP: Already in correct collection, timeless references, active work tools
-- ARCHIVE: Historical reference (if Archive collection exists)  
+- ARCHIVE: Historical reference (if Archive collection exists)
 - MOVE:[CollectionName]: Should be in different collection for better organization
 
 CRITICAL RULES:
@@ -209,14 +212,14 @@ EXAMPLE DECISIONS:
 Respond with ONLY the numbers and decisions:
 1. DELETE - outdated tutorial from 2019
 2. MOVE:development - coding reference
-3. KEEP - timeless documentation  
+3. KEEP - timeless documentation
 4. DELETE - old topical article
 etc.
 
 Include specific reasoning focusing on age, relevance, and collection fit.
 """
 
-    def _parse_batch_response(self, message: str, bookmark_count: int) -> List[Dict]:
+    def _parse_batch_response(self, message: str, bookmark_count: int) -> list[dict]:
         """Parse Claude's batch response into decision dictionaries."""
         decisions = []
         lines = message.strip().split("\n")

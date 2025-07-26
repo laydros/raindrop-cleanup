@@ -1,13 +1,12 @@
 """Core bookmark processing logic that orchestrates all components."""
 
-import anthropic
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Optional
 
-from ..api.raindrop_client import RaindropClient
 from ..ai.claude_analyzer import ClaudeAnalyzer
-from ..ui.interfaces import UserInterface
+from ..api.raindrop_client import RaindropClient
 from ..state.manager import StateManager
+from ..ui.interfaces import UserInterface
 
 
 class RaindropBookmarkCleaner:
@@ -18,6 +17,7 @@ class RaindropBookmarkCleaner:
         dry_run: bool = False,
         state_dir: str = ".raindrop_state",
         text_mode: bool = False,
+        debug: bool = False,
     ):
         """Initialize the bookmark cleaner.
 
@@ -25,10 +25,11 @@ class RaindropBookmarkCleaner:
             dry_run: If True, don't make actual changes to bookmarks
             state_dir: Directory to store session state files
             text_mode: If True, use text interface instead of keyboard navigation
+            debug: If True, enable debug logging for Claude analyzer
         """
         # Initialize components
         self.raindrop_client = RaindropClient()
-        self.claude_analyzer = ClaudeAnalyzer()
+        self.claude_analyzer = ClaudeAnalyzer(debug=debug)
         self.ui = UserInterface(text_mode=text_mode)
         self.state_manager = StateManager(state_dir=state_dir)
 
@@ -41,7 +42,7 @@ class RaindropBookmarkCleaner:
         collection_name: str,
         batch_size: int = 6,
         archive_collection_id: Optional[int] = None,
-        all_collections: Optional[List[Dict]] = None,
+        all_collections: Optional[list[dict]] = None,
         resume_from_state: bool = True,
     ):
         """Process all bookmarks in a collection with interactive decisions.
@@ -66,16 +67,14 @@ class RaindropBookmarkCleaner:
             if previous_state:
                 start_page = previous_state.get("current_page", 0)
                 processed_count = len(self.state_manager.processed_bookmark_ids)
-                print(f"\n🔄 Found previous session state:")
+                print("\n🔄 Found previous session state:")
                 print(f"   📊 {processed_count} bookmarks already processed")
                 print(f"   📄 Ready to resume from page {start_page + 1}")
-                print(f"\n⚠️  IMPORTANT: This will continue from where you left off.")
-                print(f"   You will see recommendations for NEW bookmarks only.")
-                
+                print("\n⚠️  IMPORTANT: This will continue from where you left off.")
+                print("   You will see recommendations for NEW bookmarks only.")
+
                 resume_choice = (
-                    input(f"\n🔄 Resume this session? (Y/n): ")
-                    .strip()
-                    .lower()
+                    input("\n🔄 Resume this session? (Y/n): ").strip().lower()
                 )
                 if resume_choice in ["n", "no"]:
                     print("🆕 Starting completely fresh session")
@@ -135,9 +134,7 @@ class RaindropBookmarkCleaner:
                     global_batch_num += 1
 
                     print(f"\n{'='*60}")
-                    print(
-                        f"📋 BATCH {global_batch_num} ({len(batch)} bookmarks)"
-                    )
+                    print(f"📋 BATCH {global_batch_num} ({len(batch)} bookmarks)")
                     print(f"{'='*60}")
 
                     # Get AI recommendations
@@ -149,13 +146,13 @@ class RaindropBookmarkCleaner:
                         batch, all_collections, collection_name
                     )
 
-                    # Show recommendations and get user choices  
-                    print(f"\n🔍 Claude's recommendations ready - showing interface...")
+                    # Show recommendations and get user choices
+                    print("\n🔍 Claude's recommendations ready - showing interface...")
                     batch_info = f"Batch {global_batch_num}"
                     selected_indices = self.ui.display_batch_decisions(
                         batch, decisions, collection_name, batch_info
                     )
-                    
+
                     # Safety confirmation - never execute without explicit user confirmation
                     if selected_indices:
                         print(f"\n⚠️  About to execute {len(selected_indices)} actions:")
@@ -213,7 +210,7 @@ class RaindropBookmarkCleaner:
                     break
 
         except KeyboardInterrupt:
-            print(f"\n\n⏹️  Processing interrupted - progress saved!")
+            print("\n\n⏹️  Processing interrupted - progress saved!")
             self.state_manager.save_state(collection_id, collection_name, page)
             raise
 
@@ -228,10 +225,10 @@ class RaindropBookmarkCleaner:
 
     def _execute_user_selections(
         self,
-        bookmarks: List[Dict],
-        decisions: List[Dict],
-        selected_indices: List[int],
-        all_collections: Optional[List[Dict]],
+        bookmarks: list[dict],
+        decisions: list[dict],
+        selected_indices: list[int],
+        all_collections: Optional[list[dict]],
         archive_collection_id: Optional[int] = None,
     ):
         """Execute the user's selected actions.

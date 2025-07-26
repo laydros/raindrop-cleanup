@@ -37,14 +37,14 @@ pytest tests/integration/
 # Format code with Black
 black raindrop_cleanup/ tests/
 
-# Lint with flake8
-flake8 raindrop_cleanup/ tests/
+# Lint with ruff
+ruff check raindrop_cleanup/ tests/
 
 # Type checking with mypy
 mypy raindrop_cleanup/
 
 # Run all quality checks together
-black raindrop_cleanup/ tests/ && flake8 raindrop_cleanup/ tests/ && mypy raindrop_cleanup/
+black raindrop_cleanup/ tests/ && ruff check raindrop_cleanup/ tests/ && mypy raindrop_cleanup/
 ```
 
 ### CLI Usage
@@ -60,6 +60,13 @@ raindrop-cleanup --list-collections
 
 # Use text mode interface
 raindrop-cleanup --text-mode
+
+# Enable debug logging for Claude AI analysis
+raindrop-cleanup --debug
+
+# Use environment variable to enable debug permanently
+export RAINDROP_DEBUG=1
+raindrop-cleanup
 ```
 
 ## Architecture Overview

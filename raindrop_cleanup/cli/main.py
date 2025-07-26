@@ -1,6 +1,7 @@
 """Command line interface for the Raindrop bookmark cleanup tool."""
 
 import argparse
+import os
 from typing import Optional
 
 from ..core.processor import RaindropBookmarkCleaner
@@ -14,19 +15,20 @@ def main():
         epilog="""
 Examples:
   raindrop-cleanup                            # Interactive mode
-  raindrop-cleanup --batch-size 5             # Smaller batches 
+  raindrop-cleanup --batch-size 5             # Smaller batches
   raindrop-cleanup --list-collections         # Show collections and exit
   raindrop-cleanup --dry-run                  # Test without making changes
-  
-Environment Variables Required:
-  ANTHROPIC_API_KEY   - Your Claude API key
-  RAINDROP_TOKEN      - Your Raindrop.io API token
-  
+
+Environment Variables:
+  ANTHROPIC_API_KEY   - Your Claude API key (required)
+  RAINDROP_TOKEN      - Your Raindrop.io API token (required)
+  RAINDROP_DEBUG      - Enable debug logging (1/true/yes/on)
+
 ADHD-Friendly Features:
   • Shows Claude's recommendations with reasoning
-  • You choose which actions to execute  
+  • You choose which actions to execute
   • Processes in small batches (default: 6 items)
-  • Suggests breaks every 25 items  
+  • Suggests breaks every 25 items
   • Shows real-time progress and statistics
   • Conservative defaults (keeps items when uncertain)
         """,
@@ -78,14 +80,34 @@ ADHD-Friendly Features:
         help="Use text-based interface instead of keyboard navigation",
     )
 
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Enable debug logging for Claude AI analysis",
+    )
+
     args = parser.parse_args()
 
     print("🌧️  Interactive Raindrop Bookmark Cleanup Tool")
     print("============================================")
 
+    # Check for debug mode - CLI flag or environment variable
+    debug_mode = args.debug or os.getenv("RAINDROP_DEBUG", "").lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+    if debug_mode:
+        print(
+            "🐛 Debug mode enabled - Claude AI analysis will be logged to .raindrop_debug/"
+        )
+
     try:
         cleaner = RaindropBookmarkCleaner(
-            dry_run=args.dry_run, text_mode=args.text_mode
+            dry_run=args.dry_run, text_mode=args.text_mode, debug=debug_mode
         )
 
         # Clean state files if requested
@@ -153,7 +175,7 @@ ADHD-Friendly Features:
         cleaner.print_stats()
 
     except KeyboardInterrupt:
-        print(f"\n\n⏹️  Cleanup interrupted by user")
+        print("\n\n⏹️  Cleanup interrupted by user")
         if "cleaner" in locals():
             cleaner.print_stats()
     except Exception as e:
@@ -221,41 +243,43 @@ def _resume_session(cleaner: RaindropBookmarkCleaner, session: dict, args):
 def _list_collections(collections):
     """List all collections."""
     from ..state.manager import StateManager
+
     state_manager = StateManager()
-    
+
     print(f"\n📚 Found {len(collections)} collections:")
     for col in collections:
         count = col.get("count", 0)
-        
+
         # Check for existing state
         processed_info = ""
         state = state_manager.load_state(col["_id"], col["title"])
         if state:
             processed_count = len(state.get("processed_bookmark_ids", set()))
             processed_info = f" - {processed_count} processed"
-            
+
         print(f"  📁 {col['title']} ({count} items{processed_info}) - ID: {col['_id']}")
 
 
 def _select_collection(collections) -> Optional[dict]:
     """Interactively select a collection to process."""
     from ..state.manager import StateManager
+
     state_manager = StateManager()
-    
-    print(f"\n📚 Available collections:")
+
+    print("\n📚 Available collections:")
     for i, col in enumerate(collections):
         count = col.get("count", 0)
-        
+
         # Check for existing state
         processed_info = ""
         state = state_manager.load_state(col["_id"], col["title"])
         if state:
             processed_count = len(state.get("processed_bookmark_ids", set()))
             processed_info = f" - {processed_count} processed"
-            
+
         print(f"  {i+1:2d}. {col['title']} ({count} items{processed_info})")
 
-    print(f"\n🎯 Which collection would you like to process?")
+    print("\n🎯 Which collection would you like to process?")
     print("Enter number, name, or 'quit' to exit:")
 
     while True:

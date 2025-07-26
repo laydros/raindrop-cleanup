@@ -1,8 +1,10 @@
 """Tests for the user interface components."""
 
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
+
 from raindrop_cleanup.ui.interfaces import UserInterface
 
 
@@ -49,7 +51,7 @@ class TestUserInterface:
 
             assert selected == [1]
             mock_text.assert_called_once_with(
-                mock_bookmarks, mock_claude_decisions, None
+                mock_bookmarks, mock_claude_decisions, None, None
             )
 
     @patch(
@@ -67,7 +69,7 @@ class TestUserInterface:
 
             assert selected == [2]
             mock_text.assert_called_once_with(
-                mock_bookmarks, mock_claude_decisions, None
+                mock_bookmarks, mock_claude_decisions, None, None
             )
 
     def test_display_batch_decisions_force_text_mode(
@@ -82,7 +84,7 @@ class TestUserInterface:
 
             assert selected == [0, 1]
             mock_text.assert_called_once_with(
-                mock_bookmarks, mock_claude_decisions, None
+                mock_bookmarks, mock_claude_decisions, None, None
             )
 
     def test_get_available_actions_basic(self):

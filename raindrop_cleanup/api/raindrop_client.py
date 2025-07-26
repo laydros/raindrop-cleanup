@@ -1,8 +1,9 @@
 """Raindrop.io API client for bookmark management."""
 
 import os
+from typing import Optional
+
 import requests
-from typing import List, Dict, Optional
 
 
 class RaindropClient:
@@ -29,7 +30,7 @@ class RaindropClient:
             "Content-Type": "application/json",
         }
 
-    def get_collections(self) -> List[Dict]:
+    def get_collections(self) -> list[dict]:
         """Get all Raindrop collections.
 
         Returns:
@@ -44,7 +45,7 @@ class RaindropClient:
             print(f"Error fetching collections: {response.status_code}")
             return []
 
-    def get_bookmarks_from_collection(self, collection_id: int, page: int = 0) -> Dict:
+    def get_bookmarks_from_collection(self, collection_id: int, page: int = 0) -> dict:
         """Get bookmarks from a specific collection.
 
         Args:
@@ -98,7 +99,7 @@ class RaindropClient:
         return response.status_code == 200
 
     def find_collection_by_name(
-        self, collections: List[Dict], name: str
+        self, collections: list[dict], name: str
     ) -> Optional[int]:
         """Find collection ID by name with fuzzy matching.
 

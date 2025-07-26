@@ -1,13 +1,15 @@
 """Tests for the CLI entry point."""
 
 import sys
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
+
 from raindrop_cleanup.cli.main import (
-    main,
     _handle_resume_selection,
     _list_collections,
     _select_collection,
+    main,
 )
 
 
@@ -33,7 +35,7 @@ class TestCLIMain:
         main()
 
         # Should initialize cleaner with correct arguments
-        mock_cleaner.assert_called_once_with(dry_run=True, text_mode=True)
+        mock_cleaner.assert_called_once_with(dry_run=True, text_mode=True, debug=False)
 
     @patch("raindrop_cleanup.cli.main.RaindropBookmarkCleaner")
     @patch("sys.argv", ["raindrop-cleanup", "--clean-state"])
@@ -46,6 +48,20 @@ class TestCLIMain:
         main()
 
         mock_cleaner_instance.state_manager.clean_state_files.assert_called_once()
+
+    @patch("raindrop_cleanup.cli.main.RaindropBookmarkCleaner")
+    @patch("sys.argv", ["raindrop-cleanup", "--debug"])
+    @patch("builtins.input", return_value="quit")
+    def test_debug_option(self, mock_input, mock_cleaner):
+        """Test --debug option."""
+        mock_cleaner_instance = Mock()
+        mock_cleaner_instance.raindrop_client.get_collections.return_value = []
+        mock_cleaner.return_value = mock_cleaner_instance
+
+        main()
+
+        # Should initialize cleaner with debug=True
+        mock_cleaner.assert_called_once_with(dry_run=False, text_mode=False, debug=True)
 
     @patch("raindrop_cleanup.cli.main.RaindropBookmarkCleaner")
     @patch("sys.argv", ["raindrop-cleanup", "--list-collections"])
@@ -294,3 +310,20 @@ class TestArgumentParsing:
         mock_cleaner_instance.raindrop_client.find_collection_by_name.assert_called_with(
             mock_collections, "MyArchive"
         )
+
+    @patch("sys.argv", ["raindrop-cleanup"])
+    @patch("os.getenv", return_value="1")
+    @patch("raindrop_cleanup.cli.main.RaindropBookmarkCleaner")
+    @patch("builtins.input", return_value="quit")
+    def test_debug_environment_variable(self, mock_input, mock_cleaner, mock_getenv):
+        """Test RAINDROP_DEBUG environment variable."""
+        mock_cleaner_instance = Mock()
+        mock_cleaner_instance.raindrop_client.get_collections.return_value = []
+        mock_cleaner.return_value = mock_cleaner_instance
+
+        main()
+
+        # Should check for RAINDROP_DEBUG environment variable
+        mock_getenv.assert_called_with("RAINDROP_DEBUG", "")
+        # Should initialize cleaner with debug=True from env var
+        mock_cleaner.assert_called_once_with(dry_run=False, text_mode=False, debug=True)

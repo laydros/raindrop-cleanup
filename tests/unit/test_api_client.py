@@ -1,8 +1,10 @@
 """Tests for the Raindrop API client."""
 
 import os
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from raindrop_cleanup.api.raindrop_client import RaindropClient
 
 

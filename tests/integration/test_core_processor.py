@@ -1,8 +1,10 @@
 """Integration tests for the core processor."""
 
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
+
 from raindrop_cleanup.core.processor import RaindropBookmarkCleaner
 
 
@@ -318,4 +320,3 @@ class TestRaindropBookmarkCleaner:
         cleaner.print_stats()
 
         mock_state_instance.print_stats.assert_called_once_with(dry_run=True)
-

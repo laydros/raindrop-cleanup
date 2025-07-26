@@ -1,8 +1,10 @@
 """Tests for the Claude AI analyzer."""
 
 import time
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from raindrop_cleanup.ai.claude_analyzer import ClaudeAnalyzer
 
 
@@ -131,7 +133,7 @@ class TestClaudeAnalyzer:
         assert len(decisions) == 1
         assert decisions[0]["action"] == "MOVE"
         assert decisions[0]["target"] == "InvalidFormat"
-        assert decisions[0]["reasoning"] == "better organization"
+        assert decisions[0]["reasoning"] == "no reason given"
 
     def test_parse_batch_response_unknown_action(self, mock_anthropic_client):
         """Test parsing unknown action response."""
@@ -142,7 +144,10 @@ class TestClaudeAnalyzer:
         decisions = analyzer._parse_batch_response(response, 1)
 
         assert len(decisions) == 1
-        assert decisions[0] == {"action": "KEEP", "reasoning": "unclear recommendation"}
+        assert decisions[0] == {
+            "action": "KEEP",
+            "reasoning": "unclear recommendation: UNKNOWN",
+        }
 
     def test_parse_batch_response_insufficient_responses(self, mock_anthropic_client):
         """Test parsing when Claude doesn't provide enough responses."""
@@ -175,7 +180,7 @@ class TestClaudeAnalyzer:
         mock_message.content[
             0
         ].text = """1. MOVE:Development - programming tutorial
-2. MOVE:Gaming - game guide  
+2. MOVE:Gaming - game guide
 3. DELETE - outdated content"""
 
         mock_anthropic_client.messages.create.return_value = mock_message

@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 
 class StateManager:
@@ -18,7 +18,7 @@ class StateManager:
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(exist_ok=True)
         self.current_state_file: Optional[Path] = None
-        self.processed_bookmark_ids: Set[int] = set()
+        self.processed_bookmark_ids: set[int] = set()
 
         # Initialize stats
         self.stats = {
@@ -84,7 +84,7 @@ class StateManager:
 
         print(f"💾 State saved to {state_file.name}")
 
-    def load_state(self, collection_id: int, collection_name: str) -> Optional[Dict]:
+    def load_state(self, collection_id: int, collection_name: str) -> Optional[dict]:
         """Load previous processing state if it exists.
 
         Args:
@@ -100,7 +100,7 @@ class StateManager:
             return None
 
         try:
-            with open(state_file, "r") as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             # Validate state
@@ -117,7 +117,6 @@ class StateManager:
             self.stats.update(saved_stats)
             self.stats["start_time"] = datetime.now()  # Reset for this session
 
-
             return state
 
         except (json.JSONDecodeError, KeyError) as e:
@@ -131,7 +130,7 @@ class StateManager:
             self.current_state_file.unlink()
             print(f"🧹 Cleaned up state file: {self.current_state_file.name}")
 
-    def list_resumable_sessions(self) -> List[Dict]:
+    def list_resumable_sessions(self) -> list[dict]:
         """List all resumable sessions.
 
         Returns:
@@ -141,7 +140,7 @@ class StateManager:
 
         for state_file in self.state_dir.glob("collection_*.json"):
             try:
-                with open(state_file, "r") as f:
+                with open(state_file) as f:
                     state = json.load(f)
 
                 last_updated = datetime.fromisoformat(
@@ -162,7 +161,7 @@ class StateManager:
 
         return sorted(sessions, key=lambda x: x["last_updated"], reverse=True)
 
-    def show_resumable_sessions(self) -> Optional[List[Dict]]:
+    def show_resumable_sessions(self) -> Optional[list[dict]]:
         """Show available sessions that can be resumed.
 
         Returns:

@@ -1,8 +1,8 @@
 """User interface components for interactive bookmark management."""
 
-import os
 import curses
-from typing import List, Dict, Optional
+import os
+from typing import Optional
 
 
 class UserInterface:
@@ -17,8 +17,12 @@ class UserInterface:
         self.text_mode = text_mode
 
     def display_batch_decisions(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
-    ) -> List[int]:
+        self,
+        bookmarks: list[dict],
+        decisions: list[dict],
+        collection_name: Optional[str] = None,
+        batch_info: Optional[str] = None,
+    ) -> list[int]:
         """Display recommendations and get user choices.
 
         Args:
@@ -58,11 +62,17 @@ class UserInterface:
                     bookmarks, decisions, collection_name, batch_info
                 )
         else:
-            return self._display_text_interface(bookmarks, decisions, collection_name, batch_info)
+            return self._display_text_interface(
+                bookmarks, decisions, collection_name, batch_info
+            )
 
     def _display_keyboard_interface(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
-    ) -> List[int]:
+        self,
+        bookmarks: list[dict],
+        decisions: list[dict],
+        collection_name: Optional[str] = None,
+        batch_info: Optional[str] = None,
+    ) -> list[int]:
         """Keyboard-driven interface for selecting bookmark actions."""
 
         # Prepare selections - start with Claude's recommendations
@@ -98,13 +108,13 @@ class UserInterface:
 
                     # Dynamic truncation based on terminal width - more generous limits
                     max_title = min(100, width - 5)
-                    max_domain = min(60, width - 5) 
+                    max_domain = min(60, width - 5)
                     max_reasoning = min(200, width - 5)
-                    
+
                     title = bookmark.get("title", "Untitled")[:max_title]
                     domain = bookmark.get("domain", "")[:max_domain]
                     reasoning = decision.get("reasoning", "")[:max_reasoning]
-                    current_action = action_options[selections[i]]
+                    action_options[selections[i]]
 
                     # Show target collection for MOVE actions
                     move_target = ""
@@ -126,7 +136,7 @@ class UserInterface:
                         title_attr,
                     )
                     stdscr.addstr(row + 1, 2, f"🌐 {domain}")
-                    
+
                     # Handle long reasoning with better formatting
                     reasoning_line = f"💭 {reasoning}"
                     if len(reasoning_line) > width - 6:
@@ -135,13 +145,15 @@ class UserInterface:
                         if len(reasoning_line) > available_width:
                             # Find last space before the cutoff
                             cutoff = available_width - 3
-                            space_pos = reasoning_line.rfind(' ', 0, cutoff)
-                            if space_pos > len("💭 ") + 10:  # Make sure we don't cut too early
+                            space_pos = reasoning_line.rfind(" ", 0, cutoff)
+                            if (
+                                space_pos > len("💭 ") + 10
+                            ):  # Make sure we don't cut too early
                                 reasoning_line = reasoning_line[:space_pos] + "..."
                             else:
                                 reasoning_line = reasoning_line[:cutoff] + "..."
                     stdscr.addstr(row + 2, 2, reasoning_line)
-                    
+
                     if move_target:
                         stdscr.addstr(row + 3, 2, f"📂 {move_target}")
 
@@ -235,7 +247,7 @@ class UserInterface:
             print("💾 Saving progress and exiting...")
             raise
 
-    def _get_available_actions(self, decision: Dict) -> List[int]:
+    def _get_available_actions(self, decision: dict) -> list[int]:
         """Get list of available action indices for a decision."""
         action_options = ["KEEP", "MOVE", "DELETE", "ARCHIVE"]
         available_actions = []
@@ -251,8 +263,12 @@ class UserInterface:
         return available_actions
 
     def _display_text_interface(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
-    ) -> List[int]:
+        self,
+        bookmarks: list[dict],
+        decisions: list[dict],
+        collection_name: Optional[str] = None,
+        batch_info: Optional[str] = None,
+    ) -> list[int]:
         """Fallback text-based interface for selecting bookmark actions."""
         print(f"\n{'='*80}")
         collection_info = f" FROM '{collection_name}'" if collection_name else ""
