@@ -1,6 +1,6 @@
 # 🌧️ Raindrop Cleanup Tool
 
-An interactive, AI-powered bookmark cleanup tool for [Raindrop.io](https://raindrop.io) designed with ADHD-friendly features to help you declutter and organize your bookmarks efficiently.
+An interactive, AI-powered bookmark cleanup tool for [Raindrop.io](https://raindrop.io) designed to help you declutter and organize your bookmarks efficiently.
 
 ## ✨ Features
 
@@ -9,11 +9,11 @@ An interactive, AI-powered bookmark cleanup tool for [Raindrop.io](https://raind
 - Examines title, URL, domain, and excerpt to suggest appropriate actions
 - Provides reasoning for each recommendation to help you make informed decisions
 
-### 🧠 ADHD-Friendly Design
+### 🧠 Streamlined Workflow
 - **Small batches**: Processes bookmarks in manageable chunks (default: 6 items)
-- **Break reminders**: Suggests breaks every 25 items to prevent overwhelm
+- **Break reminders**: Suggests breaks every 25 items to maintain focus
 - **Progress tracking**: Shows real-time statistics and processing rate
-- **State persistence**: Resume sessions anytime - never lose progress
+- **State persistence**: Resume sessions anytime without losing progress
 - **Conservative defaults**: Keeps items when uncertain rather than deleting
 
 ### 🎮 Interactive Interfaces
@@ -72,7 +72,7 @@ export ANTHROPIC_API_KEY="your_claude_api_key_here"
 #### Raindrop.io Token
 1. Go to [Raindrop.io App Settings](https://app.raindrop.io/settings/integrations)
 2. Navigate to "Integrations" → "For Developers"
-3. Create a new app or use existing
+3. Create a new app or use an existing one
 4. Copy your API token
 
 #### Anthropic Claude API Key
@@ -91,7 +91,7 @@ raindrop-cleanup
 # List all collections first to plan your session
 raindrop-cleanup --list-collections
 
-# Process with smaller batches (good for focus)
+# Process with smaller batches (for increased focus)
 raindrop-cleanup --batch-size 5
 
 # Test run without making changes
@@ -233,10 +233,10 @@ The AI is conservative by design - it prefers to keep items when uncertain rathe
 Not directly. Use `--dry-run` first to preview changes. Raindrop.io may have its own trash/undo features.
 
 ### Why does processing seem slow?  
-The tool includes intentional rate limiting for the Claude API and uses small batches to prevent cognitive overload. This is by design for sustainability and ADHD-friendliness.
+The tool includes intentional rate limiting for the Claude API and uses small batches to maintain consistent focus. This is by design for sustainable use.
 
 ### What if I have thousands of bookmarks?
-The tool is designed for this! It saves state automatically, so you can process large collections over multiple sessions at your own pace.
+The tool is designed for this. It saves state automatically, so you can process large collections over multiple sessions at your own pace.
 
 ### Can I customize the AI prompts?
 Not currently through the CLI, but the code is open source. Check the `ai/claude_analyzer.py` module to understand and modify the prompts.
@@ -245,7 +245,6 @@ Not currently through the CLI, but the code is open source. Check the `ai/claude
 
 - [Raindrop.io](https://raindrop.io) for the excellent bookmark management service
 - [Anthropic](https://www.anthropic.com) for Claude AI
-- The ADHD community for inspiration on accessible design patterns
 
 ---
 
