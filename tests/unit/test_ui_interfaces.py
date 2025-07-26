@@ -139,6 +139,25 @@ class TestUserInterface:
 
     @patch("builtins.input")
     @patch("builtins.print")
+    def test_display_text_interface_all_actions_skips_keep(
+        self, mock_print, mock_input, mock_bookmarks
+    ):
+        """Ensure 'all' selection ignores KEEP recommendations."""
+        mock_input.return_value = "all"
+
+        decisions = [
+            {"action": "KEEP", "reasoning": "fine"},
+            {"action": "DELETE", "reasoning": "old"},
+            {"action": "MOVE", "target": "Dev", "reasoning": "prog"},
+        ]
+
+        ui = UserInterface()
+        selected = ui._display_text_interface(mock_bookmarks, decisions)
+
+        assert selected == [1, 2]
+
+    @patch("builtins.input")
+    @patch("builtins.print")
     def test_display_text_interface_deletes_only(
         self, mock_print, mock_input, mock_bookmarks, mock_claude_decisions
     ):

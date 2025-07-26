@@ -311,7 +311,11 @@ class UserInterface:
                 elif user_input in ["none", "skip", ""]:
                     return []
                 elif user_input == "all":
-                    return list(range(len(bookmarks)))
+                    return [
+                        i
+                        for i, d in enumerate(decisions)
+                        if d.get("action") != "KEEP"
+                    ]
                 elif user_input == "deletes":
                     return [
                         i

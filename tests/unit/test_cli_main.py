@@ -1,5 +1,6 @@
 """Tests for the CLI entry point."""
 
+import os
 import sys
 from unittest.mock import MagicMock, Mock, patch
 
@@ -11,6 +12,14 @@ from raindrop_cleanup.cli.main import (
     _select_collection,
     main,
 )
+
+
+@pytest.fixture(autouse=True)
+def _set_required_env(monkeypatch):
+    """Ensure required environment variables are present for CLI tests."""
+    monkeypatch.setenv("RAINDROP_TOKEN", "testtoken")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "testkey")
+    yield
 
 
 class TestCLIMain:
@@ -324,6 +333,20 @@ class TestArgumentParsing:
         main()
 
         # Should check for RAINDROP_DEBUG environment variable
-        mock_getenv.assert_called_with("RAINDROP_DEBUG", "")
+        mock_getenv.assert_any_call("RAINDROP_DEBUG", "")
         # Should initialize cleaner with debug=True from env var
         mock_cleaner.assert_called_once_with(dry_run=False, text_mode=False, debug=True)
+
+    @patch("sys.argv", ["raindrop-cleanup"])
+    @patch("builtins.print")
+    def test_missing_env_vars_precheck(self, mock_print):
+        """CLI should exit early when required env vars are missing."""
+        with patch.dict(os.environ, {}, clear=True), patch(
+            "raindrop_cleanup.cli.main.RaindropBookmarkCleaner"
+        ) as mock_cleaner:
+            main()
+
+            mock_cleaner.assert_not_called()
+
+        output = " ".join(call[0][0] for call in mock_print.call_args_list)
+        assert "RAINDROP_TOKEN" in output
