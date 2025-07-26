@@ -2,12 +2,13 @@
 
 import argparse
 import os
-from typing import Optional
+from collections.abc import Sequence
+from typing import Any, Optional
 
 from ..core.processor import RaindropBookmarkCleaner
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="🌧️  Interactive Raindrop Bookmark Cleanup Tool - AI-powered bookmark curation",
@@ -105,6 +106,14 @@ ADHD-Friendly Features:
             "🐛 Debug mode enabled - Claude AI analysis will be logged to .raindrop_debug/"
         )
 
+    # Validate required environment variables early for better UX
+    if not os.getenv("RAINDROP_TOKEN"):
+        print("❌ RAINDROP_TOKEN environment variable not set")
+        return
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("❌ ANTHROPIC_API_KEY environment variable not set")
+        return
+
     try:
         cleaner = RaindropBookmarkCleaner(
             dry_run=args.dry_run, text_mode=args.text_mode, debug=debug_mode
@@ -185,7 +194,9 @@ ADHD-Friendly Features:
         traceback.print_exc()
 
 
-def _handle_resume_selection(sessions) -> Optional[dict]:
+def _handle_resume_selection(
+    sessions: Sequence[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     """Handle selection of a resumable session."""
     print("🔄 Choose a session to resume:")
     print("Enter number, or 'new' for a fresh session:")
@@ -206,7 +217,9 @@ def _handle_resume_selection(sessions) -> Optional[dict]:
         print("❌ Invalid choice. Try a number, or 'new' for fresh session.")
 
 
-def _resume_session(cleaner: RaindropBookmarkCleaner, session: dict, args):
+def _resume_session(
+    cleaner: RaindropBookmarkCleaner, session: dict[str, Any], args: argparse.Namespace
+) -> None:
     """Resume a selected session."""
     collections = cleaner.raindrop_client.get_collections()
     selected_collection = None
@@ -240,7 +253,7 @@ def _resume_session(cleaner: RaindropBookmarkCleaner, session: dict, args):
     cleaner.print_stats()
 
 
-def _list_collections(collections):
+def _list_collections(collections: Sequence[dict[str, Any]]) -> None:
     """List all collections."""
     from ..state.manager import StateManager
 
@@ -260,7 +273,9 @@ def _list_collections(collections):
         print(f"  📁 {col['title']} ({count} items{processed_info}) - ID: {col['_id']}")
 
 
-def _select_collection(collections) -> Optional[dict]:
+def _select_collection(
+    collections: Sequence[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     """Interactively select a collection to process."""
     from ..state.manager import StateManager
 

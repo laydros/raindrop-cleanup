@@ -121,6 +121,9 @@ class StateManager:
             self.stats.update(saved_stats)
             self.stats["start_time"] = datetime.now()  # Reset for this session
 
+            # Track the state file so it can be cleaned up later
+            self.current_state_file = state_file
+
             return state
 
         except (json.JSONDecodeError, KeyError) as e:
