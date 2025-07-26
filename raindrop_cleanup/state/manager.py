@@ -117,13 +117,6 @@ class StateManager:
             self.stats.update(saved_stats)
             self.stats["start_time"] = datetime.now()  # Reset for this session
 
-            print(f"📂 Resuming from previous session:")
-            print(f"   Already processed: {len(self.processed_bookmark_ids)} bookmarks")
-            print(f"   Last page: {state.get('current_page', 0)}")
-
-            session_time = saved_stats.get("session_time", 0)
-            if session_time > 0:
-                print(f"   Previous session time: {session_time/60:.1f} minutes")
 
             return state
 

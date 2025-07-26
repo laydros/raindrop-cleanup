@@ -98,6 +98,7 @@ class RaindropBookmarkCleaner:
 
         page = start_page
         total_processed = 0
+        global_batch_num = 0
 
         try:
             while True:
@@ -131,14 +132,11 @@ class RaindropBookmarkCleaner:
                 # Process in smaller batches for ADHD-friendly sessions
                 for i in range(0, len(unprocessed_bookmarks), batch_size):
                     batch = unprocessed_bookmarks[i : i + batch_size]
-                    batch_num = i // batch_size + 1
-                    total_batches = (
-                        len(unprocessed_bookmarks) + batch_size - 1
-                    ) // batch_size
+                    global_batch_num += 1
 
                     print(f"\n{'='*60}")
                     print(
-                        f"📋 BATCH {batch_num} of {total_batches} ({len(batch)} bookmarks)"
+                        f"📋 BATCH {global_batch_num} ({len(batch)} bookmarks)"
                     )
                     print(f"{'='*60}")
 
@@ -153,7 +151,7 @@ class RaindropBookmarkCleaner:
 
                     # Show recommendations and get user choices  
                     print(f"\n🔍 Claude's recommendations ready - showing interface...")
-                    batch_info = f"Batch {batch_num} of {total_batches}"
+                    batch_info = f"Batch {global_batch_num}"
                     selected_indices = self.ui.display_batch_decisions(
                         batch, decisions, collection_name, batch_info
                     )
@@ -206,25 +204,6 @@ class RaindropBookmarkCleaner:
                     print(
                         f"\n📊 Session Progress: {len(self.state_manager.processed_bookmark_ids)} total processed | Rate: {rate:.1f}/min"
                     )
-
-                    # ADHD break suggestion
-                    if total_processed % 25 == 0 and batch_num < total_batches:
-                        print(
-                            f"\n💡 You've processed {total_processed} bookmarks this session - great work!"
-                        )
-                        break_choice = (
-                            input("Take a 5-minute break? (y/N/quit): ").strip().lower()
-                        )
-                        if break_choice in ["quit", "q", "exit"]:
-                            print(
-                                "💾 Progress saved! You can resume later with the same command."
-                            )
-                            return
-                        elif break_choice in ["y", "yes"]:
-                            print(
-                                "☕ Take your break! Press Enter when ready to continue..."
-                            )
-                            input()
 
                 page += 1
 
