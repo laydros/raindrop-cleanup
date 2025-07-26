@@ -4,6 +4,7 @@ import time
 from unittest.mock import Mock, patch
 
 import pytest
+from anthropic.types import TextBlock
 
 from raindrop_cleanup.ai.claude_analyzer import ClaudeAnalyzer
 
@@ -175,15 +176,15 @@ class TestClaudeAnalyzer:
         """Test successful batch analysis."""
         mock_time.return_value = 100.0
 
-        mock_message = Mock()
-        mock_message.content = [Mock()]
-        mock_message.content[
-            0
-        ].text = """1. MOVE:Development - programming tutorial
-2. MOVE:Gaming - game guide
-3. DELETE - outdated content"""
-
-        mock_anthropic_client.messages.create.return_value = mock_message
+        mock_anthropic_client.messages.create.return_value = Mock(
+            content=[
+                TextBlock(
+                    text="1. MOVE:Development - programming tutorial\n2. MOVE:Gaming - game guide\n3. DELETE - outdated content",
+                    type="text",
+                )
+            ],
+            system_fingerprint="fp_a54d1162bac2439f",
+        )
 
         analyzer = ClaudeAnalyzer(client=mock_anthropic_client)
         decisions = analyzer.analyze_batch(mock_bookmarks, mock_collections, "Unsorted")
@@ -198,7 +199,7 @@ class TestClaudeAnalyzer:
         # Verify API call was made with correct parameters
         mock_anthropic_client.messages.create.assert_called_once()
         call_args = mock_anthropic_client.messages.create.call_args
-        assert call_args[1]["model"] == "claude-3-5-sonnet-20241022"
+        assert call_args[1]["model"] == "claude-3-5-sonnet-20240620"
         assert call_args[1]["max_tokens"] == 1500
         assert len(call_args[1]["messages"]) == 1
 

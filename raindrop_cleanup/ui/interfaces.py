@@ -2,7 +2,7 @@
 
 import curses
 import os
-from typing import Optional
+from typing import Any, Optional
 
 
 class UserInterface:
@@ -18,8 +18,8 @@ class UserInterface:
 
     def display_batch_decisions(
         self,
-        bookmarks: list[dict],
-        decisions: list[dict],
+        bookmarks: list[dict[str, Any]],
+        decisions: list[dict[str, Any]],
         collection_name: Optional[str] = None,
         batch_info: Optional[str] = None,
     ) -> list[int]:
@@ -68,8 +68,8 @@ class UserInterface:
 
     def _display_keyboard_interface(
         self,
-        bookmarks: list[dict],
-        decisions: list[dict],
+        bookmarks: list[dict[str, Any]],
+        decisions: list[dict[str, Any]],
         collection_name: Optional[str] = None,
         batch_info: Optional[str] = None,
     ) -> list[int]:
@@ -86,7 +86,7 @@ class UserInterface:
             else:
                 selections.append(0)  # Default to KEEP
 
-        def draw_interface(stdscr):
+        def draw_interface(stdscr: Any) -> list[int]:
             current_bookmark = 0
 
             while True:
@@ -114,7 +114,6 @@ class UserInterface:
                     title = bookmark.get("title", "Untitled")[:max_title]
                     domain = bookmark.get("domain", "")[:max_domain]
                     reasoning = decision.get("reasoning", "")[:max_reasoning]
-                    action_options[selections[i]]
 
                     # Show target collection for MOVE actions
                     move_target = ""
@@ -247,7 +246,7 @@ class UserInterface:
             print("💾 Saving progress and exiting...")
             raise
 
-    def _get_available_actions(self, decision: dict) -> list[int]:
+    def _get_available_actions(self, decision: dict[str, Any]) -> list[int]:
         """Get list of available action indices for a decision."""
         action_options = ["KEEP", "MOVE", "DELETE", "ARCHIVE"]
         available_actions = []
@@ -264,8 +263,8 @@ class UserInterface:
 
     def _display_text_interface(
         self,
-        bookmarks: list[dict],
-        decisions: list[dict],
+        bookmarks: list[dict[str, Any]],
+        decisions: list[dict[str, Any]],
         collection_name: Optional[str] = None,
         batch_info: Optional[str] = None,
     ) -> list[int]:

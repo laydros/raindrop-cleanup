@@ -4,6 +4,7 @@ import os
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from raindrop_cleanup.api.raindrop_client import RaindropClient
 
@@ -53,6 +54,9 @@ class TestRaindropClient:
         """Test collection retrieval failure."""
         mock_response = Mock()
         mock_response.status_code = 401
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "401 Client Error: Unauthorized"
+        )
         mock_get.return_value = mock_response
 
         client = RaindropClient(token=mock_raindrop_token)
@@ -85,6 +89,9 @@ class TestRaindropClient:
         """Test bookmark retrieval failure."""
         mock_response = Mock()
         mock_response.status_code = 404
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "404 Client Error: Not Found"
+        )
         mock_get.return_value = mock_response
 
         client = RaindropClient(token=mock_raindrop_token)
@@ -112,6 +119,9 @@ class TestRaindropClient:
         """Test bookmark deletion failure."""
         mock_response = Mock()
         mock_response.status_code = 404
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "404 Client Error: Not Found"
+        )
         mock_delete.return_value = mock_response
 
         client = RaindropClient(token=mock_raindrop_token)
@@ -141,6 +151,9 @@ class TestRaindropClient:
         """Test bookmark move failure."""
         mock_response = Mock()
         mock_response.status_code = 400
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "400 Client Error: Bad Request"
+        )
         mock_put.return_value = mock_response
 
         client = RaindropClient(token=mock_raindrop_token)

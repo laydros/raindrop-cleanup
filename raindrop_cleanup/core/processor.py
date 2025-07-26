@@ -1,7 +1,7 @@
 """Core bookmark processing logic that orchestrates all components."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from ..ai.claude_analyzer import ClaudeAnalyzer
 from ..api.raindrop_client import RaindropClient
@@ -18,7 +18,7 @@ class RaindropBookmarkCleaner:
         state_dir: str = ".raindrop_state",
         text_mode: bool = False,
         debug: bool = False,
-    ):
+    ) -> None:
         """Initialize the bookmark cleaner.
 
         Args:
@@ -42,9 +42,9 @@ class RaindropBookmarkCleaner:
         collection_name: str,
         batch_size: int = 6,
         archive_collection_id: Optional[int] = None,
-        all_collections: Optional[list[dict]] = None,
+        all_collections: Optional[list[dict[str, Any]]] = None,
         resume_from_state: bool = True,
-    ):
+    ) -> None:
         """Process all bookmarks in a collection with interactive decisions.
 
         Args:
@@ -156,9 +156,9 @@ class RaindropBookmarkCleaner:
                     # Safety confirmation - never execute without explicit user confirmation
                     if selected_indices:
                         print(f"\n⚠️  About to execute {len(selected_indices)} actions:")
-                        for i in selected_indices:
-                            bookmark = batch[i]
-                            decision = decisions[i]
+                        for idx in selected_indices:
+                            bookmark = batch[idx]
+                            decision = decisions[idx]
                             title = bookmark.get("title", "Untitled")[:50]
                             action = decision.get("action", "KEEP")
                             if action == "MOVE":
@@ -190,17 +190,19 @@ class RaindropBookmarkCleaner:
                     self.state_manager.save_state(collection_id, collection_name, page)
 
                     # Progress update
-                    elapsed = datetime.now() - self.state_manager.stats["start_time"]
-                    rate = (
-                        len(self.state_manager.processed_bookmark_ids)
-                        / elapsed.total_seconds()
-                        * 60
-                        if elapsed.total_seconds() > 0
-                        else 0
-                    )
-                    print(
-                        f"\n📊 Session Progress: {len(self.state_manager.processed_bookmark_ids)} total processed | Rate: {rate:.1f}/min"
-                    )
+                    start_time = self.state_manager.stats.get("start_time")
+                    if isinstance(start_time, datetime):
+                        elapsed = datetime.now() - start_time
+                        rate = (
+                            len(self.state_manager.processed_bookmark_ids)
+                            / elapsed.total_seconds()
+                            * 60
+                            if elapsed.total_seconds() > 0
+                            else 0
+                        )
+                        print(
+                            f"\n📊 Session Progress: {len(self.state_manager.processed_bookmark_ids)} total processed | Rate: {rate:.1f}/min"
+                        )
 
                 page += 1
 
@@ -225,12 +227,12 @@ class RaindropBookmarkCleaner:
 
     def _execute_user_selections(
         self,
-        bookmarks: list[dict],
-        decisions: list[dict],
+        bookmarks: list[dict[str, Any]],
+        decisions: list[dict[str, Any]],
         selected_indices: list[int],
-        all_collections: Optional[list[dict]],
+        all_collections: Optional[list[dict[str, Any]]],
         archive_collection_id: Optional[int] = None,
-    ):
+    ) -> None:
         """Execute the user's selected actions.
 
         Args:
@@ -314,6 +316,6 @@ class RaindropBookmarkCleaner:
         if unselected_count > 0:
             self.state_manager.update_stats(kept=unselected_count)
 
-    def print_stats(self):
+    def print_stats(self) -> None:
         """Print final statistics."""
         self.state_manager.print_stats(dry_run=self.dry_run)

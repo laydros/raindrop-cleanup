@@ -3,9 +3,10 @@
 import os
 import time
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import anthropic
+from anthropic.types import TextBlock
 
 
 class ClaudeAnalyzer:
@@ -13,7 +14,7 @@ class ClaudeAnalyzer:
 
     def __init__(
         self, client: Optional[anthropic.Anthropic] = None, debug: bool = False
-    ):
+    ) -> None:
         """Initialize the Claude analyzer.
 
         Args:
@@ -21,7 +22,7 @@ class ClaudeAnalyzer:
             debug: Enable debug logging to files
         """
         self.client = client or anthropic.Anthropic()
-        self.last_call_time = 0
+        self.last_call_time: float = 0.0
         self.rate_limit_delay = 1  # seconds between Claude calls
 
         # Setup debug logging
@@ -30,7 +31,7 @@ class ClaudeAnalyzer:
         if self.debug_enabled:
             os.makedirs(self.debug_dir, exist_ok=True)
 
-    def _debug_log(self, message: str):
+    def _debug_log(self, message: str) -> None:
         """Log debug message to file."""
         if not self.debug_enabled:
             return
@@ -41,7 +42,7 @@ class ClaudeAnalyzer:
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
 
-    def _rate_limit(self):
+    def _rate_limit(self) -> None:
         """Apply rate limiting for Claude API calls."""
         elapsed = time.time() - self.last_call_time
         if elapsed < self.rate_limit_delay:
@@ -50,10 +51,10 @@ class ClaudeAnalyzer:
 
     def analyze_batch(
         self,
-        bookmarks: list[dict],
-        all_collections: Optional[list[dict]] = None,
+        bookmarks: list[dict[str, Any]],
+        all_collections: Optional[list[dict[str, Any]]] = None,
         current_collection_name: Optional[str] = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Analyze a batch of bookmarks with Claude for efficiency.
 
         Args:
@@ -77,15 +78,16 @@ class ClaudeAnalyzer:
         )
 
         try:
-            message = (
-                self.client.messages.create(
-                    model="claude-3-5-sonnet-20241022",
-                    max_tokens=1500,
-                    messages=[{"role": "user", "content": prompt_content}],
-                )
-                .content[0]
-                .text
-            )
+            response_content = self.client.messages.create(
+                model="claude-3-5-sonnet-20240620",
+                max_tokens=1500,
+                messages=[{"role": "user", "content": prompt_content}],
+            ).content
+
+            message = ""
+            for block in response_content:
+                if isinstance(block, TextBlock):
+                    message += block.text
 
             return self._parse_batch_response(message, len(bookmarks))
 
@@ -93,7 +95,7 @@ class ClaudeAnalyzer:
             print(f"Batch Claude API error: {e}")
             return [{"action": "KEEP", "reasoning": "API error"}] * len(bookmarks)
 
-    def _build_batch_info(self, bookmarks: list[dict]) -> str:
+    def _build_batch_info(self, bookmarks: list[dict[str, Any]]) -> str:
         """Build bookmark information string for the prompt."""
         batch_info = ""
         for i, bookmark in enumerate(bookmarks):
@@ -116,7 +118,7 @@ class ClaudeAnalyzer:
 
     def _build_collection_info(
         self,
-        all_collections: Optional[list[dict]],
+        all_collections: Optional[list[dict[str, Any]]],
         current_collection_name: Optional[str],
     ) -> str:
         """Build collection information string for the prompt."""
@@ -219,9 +221,11 @@ etc.
 Include specific reasoning focusing on age, relevance, and collection fit.
 """
 
-    def _parse_batch_response(self, message: str, bookmark_count: int) -> list[dict]:
+    def _parse_batch_response(
+        self, message: str, bookmark_count: int
+    ) -> list[dict[str, Any]]:
         """Parse Claude's batch response into decision dictionaries."""
-        decisions = []
+        decisions: list[dict[str, Any]] = []
         lines = message.strip().split("\n")
 
         self._debug_log("=" * 60)
