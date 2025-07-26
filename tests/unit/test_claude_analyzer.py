@@ -97,7 +97,7 @@ class TestClaudeAnalyzer:
         assert "CURRENT COLLECTION: Development" in prompt
         assert batch_info in prompt
         assert collection_info in prompt
-        assert "NEVER suggest MOVE to the current collection (Development)" in prompt
+        assert "NEVER suggest MOVE to current collection (Development)" in prompt
 
     def test_parse_batch_response_valid_responses(self, mock_anthropic_client):
         """Test parsing valid Claude responses."""
@@ -193,8 +193,8 @@ class TestClaudeAnalyzer:
         # Verify API call was made with correct parameters
         mock_anthropic_client.messages.create.assert_called_once()
         call_args = mock_anthropic_client.messages.create.call_args
-        assert call_args[1]["model"] == "claude-3-haiku-20240307"
-        assert call_args[1]["max_tokens"] == 500
+        assert call_args[1]["model"] == "claude-3-5-sonnet-20241022"
+        assert call_args[1]["max_tokens"] == 1500
         assert len(call_args[1]["messages"]) == 1
 
     @patch("raindrop_cleanup.ai.claude_analyzer.time.time")

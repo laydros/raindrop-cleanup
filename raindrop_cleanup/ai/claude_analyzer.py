@@ -3,6 +3,8 @@
 import time
 import anthropic
 from typing import List, Dict, Optional
+from datetime import datetime
+import os
 
 
 class ClaudeAnalyzer:
@@ -17,6 +19,23 @@ class ClaudeAnalyzer:
         self.client = client or anthropic.Anthropic()
         self.last_call_time = 0
         self.rate_limit_delay = 1  # seconds between Claude calls
+        
+        # Setup debug logging
+        self.debug_enabled = True  # Can make this configurable later
+        self.debug_dir = ".raindrop_debug"
+        if self.debug_enabled:
+            os.makedirs(self.debug_dir, exist_ok=True)
+
+    def _debug_log(self, message: str):
+        """Log debug message to file."""
+        if not self.debug_enabled:
+            return
+            
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_file = os.path.join(self.debug_dir, "claude_parser.log")
+        
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(f"[{timestamp}] {message}\n")
 
     def _rate_limit(self):
         """Apply rate limiting for Claude API calls."""
@@ -56,8 +75,8 @@ class ClaudeAnalyzer:
         try:
             message = (
                 self.client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    max_tokens=500,
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=1500,
                     messages=[{"role": "user", "content": prompt_content}],
                 )
                 .content[0]
@@ -128,77 +147,137 @@ class ClaudeAnalyzer:
         )
 
         return f"""
-You are helping someone with ADHD declutter bookmarks. Analyze these {bookmark_count} bookmarks and provide recommendations:
+You are helping someone with ADHD declutter bookmarks. This person tends to bookmark too much and rarely revisits items. They prefer to re-search rather than keep everything. Be aggressive with DELETE suggestions.
+
+Analyze these {bookmark_count} bookmarks and provide recommendations:
 {current_collection_info}
 {batch_info}
 
 {collection_info}
 
-For each bookmark, recommend the BEST action:
-
 ACTIONS:
-- DELETE: Can find via search, old news, "might read someday", outdated tutorials, duplicate content
-- KEEP: Already in the right collection, frequently referenced, active project tools
-- ARCHIVE: Historical reference (if Archive collection exists)
-- MOVE:[CollectionName]: Should be in a different collection for better organization
+- DELETE: Topical blog posts >2 years old, tutorials >5 years old, "someday reading" items, duplicate content
+- KEEP: Already in correct collection, timeless references, active work tools
+- ARCHIVE: Historical reference (if Archive collection exists)  
+- MOVE:[CollectionName]: Should be in different collection for better organization
 
 CRITICAL RULES:
-- NEVER suggest MOVE to the current collection ({current_collection_name}) - use KEEP instead
-- Be ruthless with DELETE - they can find things again with search
-- MOVE suggestions should improve organization
-- When in doubt between KEEP and DELETE, lean toward DELETE
-- Look for patterns: multiple similar links, outdated tutorials, dead projects
+- NEVER suggest MOVE to current collection ({current_collection_name}) - use KEEP instead
+- DEFAULT to MOVE for better organization over KEEP
+- Be ruthless with DELETE - user can find things via search
+- When uncertain between KEEP/DELETE, lean toward DELETE
+- User rarely revisits bookmarks, so DELETE liberally
 
-CATEGORIZATION HINTS (examine URL, title, and domain carefully):
-- Gaming: game names (Metroid, Zelda, Pokemon), gaming sites (Steam, IGN, GameFAQs), ROM hacking, speedrunning, game guides
-- Development: GitHub, Stack Overflow, documentation, coding tutorials, development tools, programming languages
-- Reading: articles, blogs, Medium, news sites, opinion pieces
-- Tools: apps, services, utilities, online tools
-- Learning: courses, tutorials, educational content, how-to guides
+AGE-BASED DELETE RULES:
+- News articles, topical blog posts: DELETE if >2 years old
+- Tutorials, how-tos: DELETE if >5 years old (unless timeless)
+- Medium articles: DELETE if >3 years old
+- GitHub repos: DELETE if archived/abandoned
 
-URL PATTERN CLUES:
-- github.com/user/repo = development
-- steamcommunity.com, store.steampowered.com = gaming  
-- medium.com/@author, blog.* = reading
-- docs.* = development (usually)
-- reddit.com/r/gamedev = development, reddit.com/r/gaming = gaming
+SPECIFIC COLLECTION MAPPING:
+- reddit.com/r/programming → development
+- docs.microsoft.com → development (and KEEP)
+- news.ycombinator.com → reading-and-blogs
+- medium.com articles → reading-and-blogs (or DELETE if old)
+- GitHub repos → development
+- Gaming content → gaming
+- Apple-specific → apple
+- Security topics → privacy-security
+- Linux/Unix → linux-unix
+- Text editors → text-editors
+- Infrastructure/DevOps → infrastructure
+- OpenBSD → openbsd
+- Health topics → health-wellness
+- Music → music
+- Making/DIY → making
+- AI/ML → ai-ml
+- Tools/utilities → tools
+- RSS/bookmarking → bookmarking-and-rss
+- Emacs → emacs
+- Work items → work-specific
 
-BE VERY CAREFUL: 
-- "Metroid ROM hacking tutorial" = GAMING (it's about a game)
-- "JavaScript tutorial" = DEVELOPMENT (it's about programming)
-- "How to speedrun Zelda" = GAMING (it's about playing a game)
-- "How to code a game in Unity" = DEVELOPMENT (it's about programming)
+EXAMPLE DECISIONS:
+1. "React Hooks Tutorial" (2019) + react.dev → DELETE - 5+ year old tutorial, React has changed significantly
+2. "Microsoft Azure Documentation" + docs.microsoft.com → KEEP - timeless reference in correct collection
+3. "Interesting AI article" + medium.com (2021) → DELETE - 3+ year old Medium article, likely outdated
+4. "Vim Configuration Guide" + reddit.com/r/vim → MOVE:text-editors - better organization
+5. "Apple M1 Review" (2020) + arstechnica.com → DELETE - 4+ year old tech review, outdated
+6. "Python requests library docs" + docs.python.org → MOVE:development - reference documentation
+7. "Weekend project ideas" + personal blog (2019) → DELETE - 5+ year old someday reading
 
 Respond with ONLY the numbers and decisions:
-1. DELETE - outdated tutorial
-2. MOVE:development - coding tool  
-3. KEEP - active reference
-4. ARCHIVE - historical doc
+1. DELETE - outdated tutorial from 2019
+2. MOVE:development - coding reference
+3. KEEP - timeless documentation  
+4. DELETE - old topical article
 etc.
 
-Include brief reasoning after each decision.
+Include specific reasoning focusing on age, relevance, and collection fit.
 """
 
     def _parse_batch_response(self, message: str, bookmark_count: int) -> List[Dict]:
         """Parse Claude's batch response into decision dictionaries."""
         decisions = []
         lines = message.strip().split("\n")
+        
+        # Parse Claude's multi-line response format
+        self._debug_log("="*60)
+        self._debug_log(f"PARSING BATCH RESPONSE ({bookmark_count} bookmarks)")
+        self._debug_log("="*60)
+        self._debug_log(f"Raw response: {repr(message)}")
+        self._debug_log("="*60)
 
-        for line in lines:
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            self._debug_log(f"Line {i}: '{line}'")
+            
             if ". " in line and line[0].isdigit():
                 parts = line.split(". ", 1)[1].strip()
+                self._debug_log(f"  Found decision: '{parts}'")
+
+                # Parse reasoning - handle multiple formats
+                reasoning = "no reason given"
+                
+                # Format 1: "1. DELETE - reasoning text"
+                if " - " in parts:
+                    parts_split = parts.split(" - ", 1)
+                    action_part = parts_split[0].strip()
+                    reasoning = parts_split[1].strip()
+                    self._debug_log(f"  Format 1: action='{action_part}', reasoning='{reasoning}'")
+                    parts = action_part  # Use just the action part
+                else:
+                    # Format 2: Look for reasoning on next lines
+                    j = i + 1
+                    self._debug_log(f"  Looking for reasoning starting at line {j}")
+                    while j < len(lines) and lines[j].strip():
+                        next_line = lines[j].strip()
+                        self._debug_log(f"    Line {j}: '{next_line}'")
+                        
+                        # Try different reasoning prefixes
+                        for prefix in ["Reasoning:", "Reason:"]:
+                            if next_line.startswith(prefix):
+                                reasoning = next_line.replace(prefix, "").strip()
+                                self._debug_log(f"    FOUND reasoning with '{prefix}': '{reasoning}'")
+                                break
+                        
+                        if reasoning != "no reason given":
+                            break
+                            
+                        if (len(next_line) > 0 and next_line[0].isdigit() and ". " in next_line):
+                            # Hit next decision, stop looking
+                            self._debug_log(f"    Hit next decision, stopping")
+                            break
+                        j += 1
+                
+                self._debug_log(f"  Final reasoning: '{reasoning}'")
 
                 # Parse different decision types
                 if parts.upper().startswith("MOVE:"):
-                    # Extract collection name and reasoning
+                    # Extract collection name
                     try:
-                        move_part = parts.split(" - ", 1)
-                        collection_name = move_part[0].split(":", 1)[1].strip()
-                        reasoning = (
-                            move_part[1]
-                            if len(move_part) > 1
-                            else "better organization"
-                        )
+                        collection_name = parts.split(":", 1)[1].strip()
+                        self._debug_log(f"  MOVE to '{collection_name}' - {reasoning}")
                         decisions.append(
                             {
                                 "action": "MOVE",
@@ -206,29 +285,33 @@ Include brief reasoning after each decision.
                                 "reasoning": reasoning,
                             }
                         )
-                    except:
+                    except Exception as e:
+                        self._debug_log(f"  MOVE parse error: {e}")
                         decisions.append({"action": "KEEP", "reasoning": "parse error"})
                 else:
-                    # Handle DELETE, KEEP, ARCHIVE with reasoning
-                    decision_parts = parts.split(" - ", 1)
-                    action = decision_parts[0].strip().upper()
-                    reasoning = (
-                        decision_parts[1]
-                        if len(decision_parts) > 1
-                        else "no reason given"
-                    )
+                    # Handle DELETE, KEEP, ARCHIVE
+                    action = parts.strip().upper()
+                    self._debug_log(f"  {action} - {reasoning}")
 
                     if action in ["DELETE", "KEEP", "ARCHIVE"]:
                         decisions.append({"action": action, "reasoning": reasoning})
                     else:
+                        self._debug_log(f"  Unknown action '{action}', defaulting to KEEP")
                         decisions.append(
-                            {"action": "KEEP", "reasoning": "unclear recommendation"}
+                            {"action": "KEEP", "reasoning": f"unclear recommendation: {action}"}
                         )
+            
+            i += 1
 
         # Ensure we have decisions for all bookmarks
         while len(decisions) < bookmark_count:
             decisions.append(
                 {"action": "KEEP", "reasoning": "no recommendation received"}
             )
+
+        self._debug_log(f"FINAL DECISIONS: {len(decisions)} decisions for {bookmark_count} bookmarks")
+        for i, decision in enumerate(decisions[:bookmark_count]):
+            self._debug_log(f"  {i+1}. {decision['action']} - {decision['reasoning']}")
+        self._debug_log("="*60)
 
         return decisions[:bookmark_count]

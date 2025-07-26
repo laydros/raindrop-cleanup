@@ -25,7 +25,7 @@ Environment Variables Required:
 ADHD-Friendly Features:
   • Shows Claude's recommendations with reasoning
   • You choose which actions to execute  
-  • Processes in small batches (default: 10 items)
+  • Processes in small batches (default: 6 items)
   • Suggests breaks every 25 items  
   • Shows real-time progress and statistics
   • Conservative defaults (keeps items when uncertain)
@@ -36,8 +36,8 @@ ADHD-Friendly Features:
         "--batch-size",
         "-b",
         type=int,
-        default=10,
-        help="Number of bookmarks to process in each batch (default: 10, recommended 5-12)",
+        default=6,
+        help="Number of bookmarks to process in each batch (default: 6, recommended 4-8)",
     )
 
     parser.add_argument(
@@ -220,18 +220,40 @@ def _resume_session(cleaner: RaindropBookmarkCleaner, session: dict, args):
 
 def _list_collections(collections):
     """List all collections."""
+    from ..state.manager import StateManager
+    state_manager = StateManager()
+    
     print(f"\n📚 Found {len(collections)} collections:")
     for col in collections:
         count = col.get("count", 0)
-        print(f"  📁 {col['title']} ({count} items) - ID: {col['_id']}")
+        
+        # Check for existing state
+        processed_info = ""
+        state = state_manager.load_state(col["_id"], col["title"])
+        if state:
+            processed_count = len(state.get("processed_bookmark_ids", set()))
+            processed_info = f" - {processed_count} processed"
+            
+        print(f"  📁 {col['title']} ({count} items{processed_info}) - ID: {col['_id']}")
 
 
 def _select_collection(collections) -> Optional[dict]:
     """Interactively select a collection to process."""
+    from ..state.manager import StateManager
+    state_manager = StateManager()
+    
     print(f"\n📚 Available collections:")
     for i, col in enumerate(collections):
         count = col.get("count", 0)
-        print(f"  {i+1:2d}. {col['title']} ({count} items)")
+        
+        # Check for existing state
+        processed_info = ""
+        state = state_manager.load_state(col["_id"], col["title"])
+        if state:
+            processed_count = len(state.get("processed_bookmark_ids", set()))
+            processed_info = f" - {processed_count} processed"
+            
+        print(f"  {i+1:2d}. {col['title']} ({count} items{processed_info})")
 
     print(f"\n🎯 Which collection would you like to process?")
     print("Enter number, name, or 'quit' to exit:")

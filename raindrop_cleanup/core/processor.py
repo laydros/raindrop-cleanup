@@ -39,7 +39,7 @@ class RaindropBookmarkCleaner:
         self,
         collection_id: int,
         collection_name: str,
-        batch_size: int = 10,
+        batch_size: int = 6,
         archive_collection_id: Optional[int] = None,
         all_collections: Optional[List[Dict]] = None,
         resume_from_state: bool = True,
@@ -65,13 +65,20 @@ class RaindropBookmarkCleaner:
             )
             if previous_state:
                 start_page = previous_state.get("current_page", 0)
+                processed_count = len(self.state_manager.processed_bookmark_ids)
+                print(f"\n🔄 Found previous session state:")
+                print(f"   📊 {processed_count} bookmarks already processed")
+                print(f"   📄 Ready to resume from page {start_page + 1}")
+                print(f"\n⚠️  IMPORTANT: This will continue from where you left off.")
+                print(f"   You will see recommendations for NEW bookmarks only.")
+                
                 resume_choice = (
-                    input(f"\n🔄 Resume from page {start_page}? (Y/n): ")
+                    input(f"\n🔄 Resume this session? (Y/n): ")
                     .strip()
                     .lower()
                 )
                 if resume_choice in ["n", "no"]:
-                    print("🆕 Starting fresh session")
+                    print("🆕 Starting completely fresh session")
                     self.state_manager.processed_bookmark_ids.clear()
                     start_page = 0
                     # Reset stats
@@ -86,6 +93,8 @@ class RaindropBookmarkCleaner:
                         "start_time": datetime.now(),
                         "session_time": 0,
                     }
+                else:
+                    print("✅ Resuming previous session")
 
         page = start_page
         total_processed = 0
@@ -142,10 +151,34 @@ class RaindropBookmarkCleaner:
                         batch, all_collections, collection_name
                     )
 
-                    # Show recommendations and get user choices
+                    # Show recommendations and get user choices  
+                    print(f"\n🔍 Claude's recommendations ready - showing interface...")
+                    batch_info = f"Batch {batch_num} of {total_batches}"
                     selected_indices = self.ui.display_batch_decisions(
-                        batch, decisions, collection_name
+                        batch, decisions, collection_name, batch_info
                     )
+                    
+                    # Safety confirmation - never execute without explicit user confirmation
+                    if selected_indices:
+                        print(f"\n⚠️  About to execute {len(selected_indices)} actions:")
+                        for i in selected_indices:
+                            bookmark = batch[i]
+                            decision = decisions[i]
+                            title = bookmark.get("title", "Untitled")[:50]
+                            action = decision.get("action", "KEEP")
+                            if action == "MOVE":
+                                target = decision.get("target", "Unknown")
+                                print(f"    🔄 MOVE to {target}: {title}")
+                            elif action == "DELETE":
+                                print(f"    ❌ DELETE: {title}")
+                            elif action == "ARCHIVE":
+                                print(f"    📦 ARCHIVE: {title}")
+                        print("\nPress Enter to confirm, or Ctrl+C to cancel...")
+                        try:
+                            input()
+                        except KeyboardInterrupt:
+                            print("❌ Actions cancelled by user")
+                            return
 
                     # Execute user's choices
                     self._execute_user_selections(

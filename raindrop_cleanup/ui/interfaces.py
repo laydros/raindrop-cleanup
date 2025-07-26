@@ -17,7 +17,7 @@ class UserInterface:
         self.text_mode = text_mode
 
     def display_batch_decisions(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None
+        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
     ) -> List[int]:
         """Display recommendations and get user choices.
 
@@ -25,6 +25,7 @@ class UserInterface:
             bookmarks: List of bookmark dictionaries
             decisions: List of AI decision dictionaries
             collection_name: Name of the current collection being processed
+            batch_info: Optional batch progress info (e.g., "Batch 2 of 5")
 
         Returns:
             List of indices of bookmarks to process (non-KEEP actions)
@@ -42,25 +43,25 @@ class UserInterface:
                     0
                 ):  # Check if stdin is a terminal
                     return self._display_keyboard_interface(
-                        bookmarks, decisions, collection_name
+                        bookmarks, decisions, collection_name, batch_info
                     )
                 else:
                     print(
                         "⚠️  Terminal doesn't support interactive mode, falling back to text interface"
                     )
                     return self._display_text_interface(
-                        bookmarks, decisions, collection_name
+                        bookmarks, decisions, collection_name, batch_info
                     )
             except (ImportError, curses.error):
                 print("⚠️  Curses not available, using text interface")
                 return self._display_text_interface(
-                    bookmarks, decisions, collection_name
+                    bookmarks, decisions, collection_name, batch_info
                 )
         else:
-            return self._display_text_interface(bookmarks, decisions, collection_name)
+            return self._display_text_interface(bookmarks, decisions, collection_name, batch_info)
 
     def _display_keyboard_interface(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None
+        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
     ) -> List[int]:
         """Keyboard-driven interface for selecting bookmark actions."""
 
@@ -84,7 +85,8 @@ class UserInterface:
 
                 # Header
                 collection_info = f" in '{collection_name}'" if collection_name else ""
-                header = f"📋 Batch Review ({len(bookmarks)} bookmarks{collection_info}) - Navigate: ↑↓/jk, Select: ←→/hl, Accept: Enter, Quit: q"
+                batch_progress = f" - {batch_info}" if batch_info else ""
+                header = f"📋 Batch Review ({len(bookmarks)} bookmarks{collection_info}{batch_progress}) - Navigate: ↑↓/jk, Select: ←→/hl, Accept: Enter, Quit: q"
                 stdscr.addstr(0, 0, header[: width - 1], curses.A_BOLD)
                 stdscr.addstr(1, 0, "─" * min(width - 1, 80))
 
@@ -94,9 +96,14 @@ class UserInterface:
                     if start_row + i * 5 >= height - 2:  # Don't overflow screen
                         break
 
-                    title = bookmark.get("title", "Untitled")[:60]
-                    domain = bookmark.get("domain", "")[:30]
-                    reasoning = decision.get("reasoning", "")[:80]
+                    # Dynamic truncation based on terminal width - more generous limits
+                    max_title = min(100, width - 5)
+                    max_domain = min(60, width - 5) 
+                    max_reasoning = min(200, width - 5)
+                    
+                    title = bookmark.get("title", "Untitled")[:max_title]
+                    domain = bookmark.get("domain", "")[:max_domain]
+                    reasoning = decision.get("reasoning", "")[:max_reasoning]
                     current_action = action_options[selections[i]]
 
                     # Show target collection for MOVE actions
@@ -119,7 +126,22 @@ class UserInterface:
                         title_attr,
                     )
                     stdscr.addstr(row + 1, 2, f"🌐 {domain}")
-                    stdscr.addstr(row + 2, 2, f"💭 {reasoning}")
+                    
+                    # Handle long reasoning with better formatting
+                    reasoning_line = f"💭 {reasoning}"
+                    if len(reasoning_line) > width - 6:
+                        # Try to break at word boundaries
+                        available_width = width - 6
+                        if len(reasoning_line) > available_width:
+                            # Find last space before the cutoff
+                            cutoff = available_width - 3
+                            space_pos = reasoning_line.rfind(' ', 0, cutoff)
+                            if space_pos > len("💭 ") + 10:  # Make sure we don't cut too early
+                                reasoning_line = reasoning_line[:space_pos] + "..."
+                            else:
+                                reasoning_line = reasoning_line[:cutoff] + "..."
+                    stdscr.addstr(row + 2, 2, reasoning_line)
+                    
                     if move_target:
                         stdscr.addstr(row + 3, 2, f"📂 {move_target}")
 
@@ -229,13 +251,14 @@ class UserInterface:
         return available_actions
 
     def _display_text_interface(
-        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None
+        self, bookmarks: List[Dict], decisions: List[Dict], collection_name: Optional[str] = None, batch_info: Optional[str] = None
     ) -> List[int]:
         """Fallback text-based interface for selecting bookmark actions."""
         print(f"\n{'='*80}")
         collection_info = f" FROM '{collection_name}'" if collection_name else ""
+        batch_progress = f" - {batch_info}" if batch_info else ""
         print(
-            f"🤖 CLAUDE'S RECOMMENDATIONS FOR {len(bookmarks)} BOOKMARKS{collection_info}"
+            f"🤖 CLAUDE'S RECOMMENDATIONS FOR {len(bookmarks)} BOOKMARKS{collection_info}{batch_progress}"
         )
         print(f"{'='*80}")
 
