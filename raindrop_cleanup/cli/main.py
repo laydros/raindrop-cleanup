@@ -186,7 +186,9 @@ ADHD-Friendly Features:
         traceback.print_exc()
 
 
-def _handle_resume_selection(sessions: Sequence[dict[str, Any]]) -> Optional[dict[str, Any]]:
+def _handle_resume_selection(
+    sessions: Sequence[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     """Handle selection of a resumable session."""
     print("🔄 Choose a session to resume:")
     print("Enter number, or 'new' for a fresh session:")
@@ -263,7 +265,9 @@ def _list_collections(collections: Sequence[dict[str, Any]]) -> None:
         print(f"  📁 {col['title']} ({count} items{processed_info}) - ID: {col['_id']}")
 
 
-def _select_collection(collections: Sequence[dict[str, Any]]) -> Optional[dict[str, Any]]:
+def _select_collection(
+    collections: Sequence[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     """Interactively select a collection to process."""
     from ..state.manager import StateManager
 
