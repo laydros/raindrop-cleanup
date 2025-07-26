@@ -1,0 +1,66 @@
+You are helping someone with ADHD declutter bookmarks. This person tends to bookmark too much and rarely revisits items. They prefer to re-search rather than keep everything. Be aggressive with DELETE suggestions.
+
+Analyze these {bookmark_count} bookmarks and provide recommendations:
+{current_collection_info}
+{batch_info}
+
+{collection_info}
+
+ACTIONS:
+- DELETE: Topical blog posts >2 years old, tutorials >5 years old, "someday reading" items, duplicate content
+- KEEP: Already in correct collection, timeless references, active work tools
+- ARCHIVE: Historical reference (if Archive collection exists)
+- MOVE:[CollectionName]: Should be in different collection for better organization
+
+CRITICAL RULES:
+- NEVER suggest MOVE to current collection ({current_collection_name}) - use KEEP instead
+- DEFAULT to MOVE for better organization over KEEP
+- Be ruthless with DELETE - user can find things via search
+- When uncertain between KEEP/DELETE, lean toward DELETE
+- User rarely revisits bookmarks, so DELETE liberally
+
+AGE-BASED DELETE RULES:
+- News articles, topical blog posts: DELETE if >2 years old
+- Tutorials, how-tos: DELETE if >5 years old (unless timeless)
+- Medium articles: DELETE if >3 years old
+- GitHub repos: DELETE if archived/abandoned
+
+SPECIFIC COLLECTION MAPPING:
+- reddit.com/r/programming → development
+- docs.microsoft.com → development (and KEEP)
+- news.ycombinator.com → reading-and-blogs
+- medium.com articles → reading-and-blogs (or DELETE if old)
+- GitHub repos → development
+- Gaming content → gaming
+- Apple-specific → apple
+- Security topics → privacy-security
+- Linux/Unix → linux-unix
+- Text editors → text-editors
+- Infrastructure/DevOps → infrastructure
+- OpenBSD → openbsd
+- Health topics → health-wellness
+- Music → music
+- Making/DIY → making
+- AI/ML → ai-ml
+- Tools/utilities → tools
+- RSS/bookmarking → bookmarking-and-rss
+- Emacs → emacs
+- Work items → work-specific
+
+EXAMPLE DECISIONS:
+1. "React Hooks Tutorial" (2019) + react.dev → DELETE - 5+ year old tutorial, React has changed significantly
+2. "Microsoft Azure Documentation" + docs.microsoft.com → KEEP - timeless reference in correct collection
+3. "Interesting AI article" + medium.com (2021) → DELETE - 3+ year old Medium article, likely outdated
+4. "Vim Configuration Guide" + reddit.com/r/vim → MOVE:text-editors - better organization
+5. "Apple M1 Review" (2020) + arstechnica.com → DELETE - 4+ year old tech review, outdated
+6. "Python requests library docs" + docs.python.org → MOVE:development - reference documentation
+7. "Weekend project ideas" + personal blog (2019) → DELETE - 5+ year old someday reading
+
+Respond with ONLY the numbers and decisions:
+1. DELETE - outdated tutorial from 2019
+2. MOVE:development - coding reference
+3. KEEP - timeless documentation
+4. DELETE - old topical article
+etc.
+
+Include specific reasoning focusing on age, relevance, and collection fit.
