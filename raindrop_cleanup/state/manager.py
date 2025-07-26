@@ -1,7 +1,7 @@
 """Session state management and persistence for resumable bookmark cleanup."""
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -70,7 +70,9 @@ class StateManager:
         }
 
         # Update session time
-        if "start_time" in self.stats and isinstance(self.stats["start_time"], datetime):
+        if "start_time" in self.stats and isinstance(
+            self.stats["start_time"], datetime
+        ):
             elapsed = datetime.now() - self.stats["start_time"]
             state["stats"]["session_time"] = (
                 self.stats.get("session_time", 0) + elapsed.total_seconds()
